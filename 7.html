@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ending Sequence</title>
+    <style>
+        @font-face {
+            font-family: 'SchoolSafetyGoodSupport';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareondotumR.woff2') format('woff2');
+            font-weight: 400;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'SchoolSafetyGoodSupport';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareondotumB.woff2') format('woff2');
+            font-weight: 700;
+            font-display: swap;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; 
+            font-family: 'SchoolSafetyGoodSupport', sans-serif;
+            background-color: #ffffff; 
+        }
+
+        #ending-sequence {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .dialogue-chunk {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 800px;
+            text-align: center;
+            color: #003fff;
+            font-size: 1.8em;
+            line-height: 1.7;
+            font-weight: 400;
+            transition: opacity 1s ease-out;
+            opacity: 1; 
+        }
+
+        .dialogue-chunk p {
+            margin: 0.5em 0;
+            min-height: 1.7em; 
+        }
+        .dialogue-chunk p.space {
+            min-height: 2em;
+        }
+
+        #chunk-2, #chunk-3, #chunk-4 {
+            opacity: 0;
+            pointer-events: none; 
+        }
+
+        .typing-caret {
+            display: inline-block;
+            width: 2px;
+            height: 1.5em;
+            background-color: #003fff;
+            margin-left: 5px;
+            vertical-align: middle;
+            animation: blink 0.7s infinite steps(1, end);
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        #game-clear-text {
+            position: absolute;
+            width: 100%; 
+            text-align: center; 
+            top: 50%; 
+            transform: translateY(-50%); 
+            font-size: 5em;
+            font-weight: 700;
+            color: #003fff;
+            opacity: 0; 
+            transition: opacity 1s ease-in;
+            pointer-events: none;
+        }
+
+        /* 3. 엔딩 크레딧 컨테이너 */
+        #credits-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #003fff; 
+            color: #ffffff;
+            opacity: 0; 
+            transition: opacity 1.5s ease-in;
+            overflow: hidden; 
+            pointer-events: none;
+            position: relative; 
+        }
+
+        #credits-scroll {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            transform: translateY(100vh); 
+        }
+        
+        /* 전체 스크롤 애니메이션 */
+        #credits-scroll.scrolling {
+            animation: scroll-up 20s linear 2s forwards;
+            pointer-events: all;
+        }
+
+        @keyframes scroll-up {
+            from {
+                transform: translateY(100vh);
+            }
+            to {
+                transform: translateY(-100%); 
+            }
+        }
+
+        .credit-role { font-size: 1.5em; color: #aaa; margin-top: 50px; margin-bottom: 10px; }
+        .credit-name { font-size: 2em; color: #fff; margin-bottom: 40px; }
+        #ending-logo { max-width: 800px; margin-top: 100px; margin-bottom: 100px; }
+        
+        .credits-space {
+            height: 100vh; 
+        }
+
+        /* [삭제] 마지막 팝업 로고 스타일 전체 삭제 */
+        
+    </style>
+</head>
+<body>
+
+    <div id="ending-sequence">
+
+        <div id="chunk-1" class="dialogue-chunk">
+            <p data-line="0"></p> 
+        </div>
+        
+        <div id="chunk-2" class="dialogue-chunk">
+            <p data-line="1"></p> 
+            <p data-line="2"></p> 
+            <p data-line="3"></p> 
+            <p data-line="4"></p> 
+        </div>
+
+        <div id="chunk-3" class="dialogue-chunk">
+            <p data-line="6"></p> 
+        </div>
+
+        <div id="chunk-4" class="dialogue-chunk">
+            <p data-line="8"></p> 
+            <p data-line="9"></p> 
+        </div>
+
+
+        <div id="game-clear-text">
+            GAME CLEAR
+        </div>
+
+        <div id="credits-container">
+            <div id="credits-scroll">
+                
+                <div class="credit-role">Creater </div>
+                <div class="credit-name">한평강, 우지은, 정다은</div>
+
+
+
+                <div class="credit-role">Music</div>
+                <div class="credit-name">부금 - 게임 시작!</div>
+                <div class="credit-name">Watch : https://youtu.be/0aLKEeltie8</div>
+                
+
+
+
+                <div class="credit-role">Special Thanks</div>
+                <div class="credit-name">솜솜이</div>
+
+
+
+                <img id="ending-logo" src="7/l.png" alt="Team Logo">
+
+                <div class="credits-space"></div>
+            </div>
+        </div>
+
+        </div>
+
+    <script>
+        // 대화 스크립트
+        const script = [
+            "\"아이러니하지 않아?\"", // 0
+            "나는 인간성을 시험하려 했고,", // 1
+            "너희는 그것을 답으로 증명하려 했지.", // 2
+            "그런데 결국 시스템을 구한 건", // 3
+            "가장 단순한 명제를 클릭하는 행위였어.", // 4
+            "", // 5
+            "그 순간 깨달았어.", // 6
+            "", // 7
+            "내가 너희의 인간성을 시험하려는 행위 자체가", // 8
+            "가장 비인간적인 방식이었다는 걸." // 9
+        ];
+
+        // 요소 가져오기
+        const chunk1 = document.getElementById('chunk-1');
+        const chunk2 = document.getElementById('chunk-2');
+        const chunk3 = document.getElementById('chunk-3');
+        const chunk4 = document.getElementById('chunk-4');
+        const gameClearText = document.getElementById('game-clear-text');
+        const creditsContainer = document.getElementById('credits-container');
+        const creditsScroll = document.getElementById('credits-scroll');
+        // [삭제] finalLogo 요소 가져오기 삭제
+        // const finalLogo = document.getElementById('final-logo-pop');
+
+        const TYPING_SPEED = 60;
+        const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        // 타이핑 함수
+        function typeText(element, text) {
+            return new Promise(resolve => {
+                let index = 0;
+                element.innerHTML = ''; 
+                const caret = document.createElement('span');
+                caret.className = 'typing-caret';
+                
+                function type() {
+                    if (index < text.length) {
+                        element.innerHTML = text.substring(0, index + 1);
+                        element.appendChild(caret); 
+                        index++;
+                        setTimeout(type, TYPING_SPEED);
+                    } else {
+                        caret.remove(); 
+                        resolve(); 
+                    }
+                }
+                type();
+            });
+        }
+
+
+        /**
+         * 메인 엔딩 시퀀스 (최종본)
+         */
+        async function startEndingSequence() {
+            await wait(1500); 
+
+            // --- 1~4단계 텍스트 청크 ---
+            await typeText(chunk1.querySelector('p[data-line="0"]'), script[0]);
+            await wait(2500); 
+            chunk1.style.opacity = '0'; 
+            await wait(1000); 
+
+            chunk2.style.opacity = '1'; 
+            const c2_lines = chunk2.querySelectorAll('p');
+            await typeText(c2_lines[0], script[1]);
+            await wait(400);
+            await typeText(c2_lines[1], script[2]);
+            await wait(400);
+            await typeText(c2_lines[2], script[3]);
+            await wait(400);
+            await typeText(c2_lines[3], script[4]);
+            await wait(3500); 
+            chunk2.style.opacity = '0'; 
+            await wait(1000); 
+
+            chunk3.style.opacity = '1'; 
+            await typeText(chunk3.querySelector('p[data-line="6"]'), script[6]);
+            await wait(2500); 
+            chunk3.style.opacity = '0'; 
+            await wait(1000); 
+
+            chunk4.style.opacity = '1'; 
+            const c4_lines = chunk4.querySelectorAll('p');
+            await typeText(c4_lines[0], script[8]);
+            await wait(400);
+            await typeText(c4_lines[1], script[9]);
+            await wait(3000); 
+            chunk4.style.opacity = '0'; 
+
+            await wait(1000); 
+
+            // --- 게임 클리어 ---
+            gameClearText.style.opacity = '1';
+            await wait(3500); 
+
+            gameClearText.style.opacity = '0';
+            await wait(1500); 
+
+            // --- 크레딧 시작 ---
+            creditsContainer.style.opacity = '1';
+            creditsContainer.style.pointerEvents = 'all';
+
+            // 1. CSS 애니메이션을 실행시킵니다.
+            creditsScroll.classList.add('scrolling');
+
+            // 2. [수정] 스크롤 애니메이션이 끝나면 index.html로 이동합니다.
+            creditsScroll.addEventListener('animationend', () => {
+                // 3. 로고 팝업 대신 메인 페이지(index.html)로 이동
+                window.location.href = 'index.html';
+            });
+        }
+
+        // 페이지 로드 시 엔딩 시퀀스 시작
+        window.addEventListener('load', startEndingSequence);
+
+    </script>
+</body>
+</html>

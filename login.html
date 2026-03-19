@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hi Human</title>
+  <style>
+    @font-face {
+      font-family: 'SchoolSafetyGoodSupport';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareondotumR.woff2') format('woff2');
+      font-weight: 400; font-display: swap;
+    }
+    @font-face {
+      font-family: 'SchoolSafetyGoodSupport';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareondotumB.woff2') format('woff2');
+      font-weight: 700; font-display: swap;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'SchoolSafetyGoodSupport', sans-serif;
+    }
+
+    /* --- [수정] 배경을 별도 레이어로 분리 --- */
+    .page-background {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: -2; /* 파티클보다 뒤에 위치 */
+      --gradient-start: #ffffff; --gradient-end: #003cff;   
+      --dot-color: rgba(0, 0, 0, 0.1); --dot-size: 2px; --dot-spacing: 8px;  
+      background-image:
+        radial-gradient(circle, var(--dot-color) var(--dot-size), transparent 0),
+        linear-gradient(to top, var(--gradient-end), var(--gradient-start));
+      background-size: var(--dot-spacing) var(--dot-spacing), cover;
+      background-attachment: fixed;
+    }
+
+    /* --- [수정] 파티클이 보이도록 z-index 조정 --- */
+    #screen {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: -1; /* 배경보다는 위, 콘텐츠보다는 아래 */
+    }
+
+    /* --- [수정] 팝업창을 정중앙에 위치시키기 위한 Flex 컨테이너 --- */
+    .modal-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      position: relative; /* 수정 버튼의 기준점 */
+    }
+
+    .modal-common {
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 1));
+      border-radius: 10px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+      text-align: center; overflow: hidden;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      display: flex; flex-direction: column;
+      border: 2px solid #003cff;
+      width: 90%;
+      max-width: 450px;
+    }
+    
+    .hidden { opacity: 0 !important; transform: scale(0.9) !important; pointer-events: none !important; }
+
+    .modal-header {
+      background: linear-gradient(to bottom, #5577ff, #003cff); color: white; padding: 16px 0;
+      font-size: 1.5em; font-weight: 700;
+    }
+
+    .modal-content { padding: 30px 20px; position: relative; }
+    
+    #nickname-input {
+      width: 80%; padding: 12px 20px; margin-bottom: 20px;
+      border: 2px solid rgb(0, 55, 255); border-radius: 7px;
+      font-size: 1.2em; text-align: center;
+      font-family: 'SchoolSafetyGoodSupport', sans-serif; outline: none;
+      color: #043fff; 
+    }
+    .instruction-text { font-size: 1.2em; margin: 0; color: #043fff; }
+    .sub-instruction { font-size: 0.9em; color: #043fff; margin-top: 8px; margin-bottom: 25px; }
+
+    #confirm-btn, #complete-btn {
+      background: linear-gradient(to bottom, #5577ff, #003cff); color: white; border: none;
+      border-radius: 10px; padding: 12px 40px; font-size: 1.1em;
+      font-weight: 700; cursor: pointer; transition: background-color 0.2s;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    #confirm-btn:hover, #complete-btn:hover { background-color: rgb(30, 80, 255); }
+    
+    #final-welcome-message {
+        font-size: 1.4em; font-weight: 700; color: #043fff;
+        margin-top: 55px;
+        margin-bottom: 63px;
+        font-weight: normal;
+    }
+
+    #edit-nickname-btn {
+        cursor: pointer;
+        transition: transform 0.2s ease, opacity 0.5s ease;
+    }
+    #edit-nickname-btn:hover { transform: scale(1.1); }
+
+    /* --- 버튼 공통 스타일 --- */
+.icon-btn {
+  position: absolute;
+  cursor: pointer;
+  width: 4.3vw;
+  height: 4.3vw; /* 너비와 높이를 같게 하여 비율 유지 */
+  z-index: 100;
+  
+  /* 배경 이미지 공통 설정 */
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+
+  /* 부드러운 전환 효과 */
+  transition: transform 0.2s ease, background-image 0.2s ease;
+}
+
+/* 공통 호버 효과 */
+.icon-btn:hover {
+  transform: scale(1.1); /* 모든 아이콘 버튼이 커짐 */
+}
+
+/* --- 홈 버튼 --- */
+#home-btn {
+  top: 4%;
+  right: 3%;
+  background-image: url('map/b4.png');
+}
+#home-btn:hover {
+  background-image: url('map/-b4.png');
+}
+  </style>
+</head>
+<body>
+  <audio id="bgm" loop><source src="bgm.mp3" type="audio/mpeg"></audio>
+    <a href="index.html" id="home-btn" class="icon-btn" aria-label="홈으로"></a>
+
+  <!-- [수정] 배경과 파티클 레이어 분리 -->
+  <div class="page-background"></div>
+  <canvas id="screen"></canvas>
+
+  <img src="login/b.png" id="edit-nickname-btn" class="hidden" alt="닉네임 변경" style="position: absolute; top: 4%; left: 3%; width: 4.3vw; height: auto; z-index: 20;">
+
+  <!-- [수정] 팝업창들을 정중앙 정렬용 컨테이너로 감싸기 -->
+  <div class="modal-container">
+    <!-- 두 팝업창은 이제 flex item으로 자연스럽게 중앙에 위치함 -->
+    <div class="modal-common hidden" id="nicknameModal">
+      <div class="modal-header">Enter Your Name</div>
+      <div class="modal-content">
+        <input type="text" id="nickname-input" maxlength="7" autocomplete="off">
+        <p class="instruction-text">사용할 닉네임을 입력해주세요</p>
+        <p class="sub-instruction">한글/영문/숫자 7자 이내</p>
+        <button id="confirm-btn">확인</button>
+      </div>
+    </div>
+
+    <div class="modal-common hidden" id="welcomeModal">
+      <div class="modal-header">Enter Your Name</div>
+      <div class="modal-content">
+          <p id="final-welcome-message"></p>
+          <button id="complete-btn">완료</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Canvas 애니메이션 코드는 변경 없음
+    const canvas = document.getElementById("screen"); const ctx = canvas.getContext("2d"); let w, h; function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; } window.addEventListener("resize", resize); resize(); class Circle { constructor() {this.reset();} reset() { this.x = Math.random() * w; this.y = Math.random() * h; this.r = Math.random() * 10 + 5; this.dx = (Math.random() - 0.5) * 1.5; this.dy = (Math.random() - 0.5) * 1.5; this.color = `hsl(${Math.random() * 360}, 100%, 60%)`; } draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill(); } update() { this.x += this.dx; this.y += this.dy; if(this.x < this.r || this.x > w - this.r) this.dx *= -1; if(this.y < this.r || this.y > h - this.r) this.dy *= -1; this.draw(); } } let circles = []; for(let i = 0; i < 50; i++) { circles.push(new Circle()); } function animate() { ctx.clearRect(0, 0, w, h); circles.forEach(c => c.update()); requestAnimationFrame(animate); } animate();
+    
+    // JS 로직은 변경 없음
+    const nicknameModal = document.getElementById('nicknameModal');
+    const nicknameInput = document.getElementById('nickname-input');
+    const confirmBtn = document.getElementById('confirm-btn');
+    const welcomeModal = document.getElementById('welcomeModal');
+    const finalWelcomeMessage = document.getElementById('final-welcome-message');
+    const completeBtn = document.getElementById('complete-btn');
+    const editBtn = document.getElementById('edit-nickname-btn');
+
+      // '닉네임 변경' 버튼에 마우스를 올렸을 때
+    editBtn.addEventListener('mouseover', () => {
+        editBtn.src = 'login/-b.png'; // 이미지를 '-b.png'로 변경
+    });
+
+    // '닉네임 변경' 버튼에서 마우스가 벗어났을 때
+    editBtn.addEventListener('mouseout', () => {
+        editBtn.src = 'login/b.png'; // 이미지를 원래 'b.png'로 되돌림
+    });
+
+
+    // [수정] 두 팝업창을 직접 제어하는 대신, 부모 컨테이너를 통해 제어하는 것이 더 안정적일 수 있으나
+    // 현재 로직은 각 팝업창의 hidden 클래스를 토글하는 방식이므로, 하나만 보이게 됩니다.
+    // display:flex로 인해 두 팝업창이 동시에 보이면 나란히 표시될 수 있으므로,
+    // 한 번에 하나만 보이도록 JS 로직을 수정합니다.
+    const nicknameWrapper = document.getElementById('nicknameModal');
+    const welcomeWrapper = document.getElementById('welcomeModal');
+
+    // 초기에 팝업창이 하나만 보이도록 스타일을 직접 설정합니다.
+    nicknameWrapper.style.display = 'none';
+    welcomeWrapper.style.display = 'none';
+
+
+    function showNicknameModal() {
+        nicknameWrapper.style.display = 'flex';
+        welcomeWrapper.style.display = 'none';
+        nicknameWrapper.classList.remove('hidden');
+    }
+
+    function showWelcomeModal() {
+        nicknameWrapper.style.display = 'none';
+        welcomeWrapper.style.display = 'flex';
+        welcomeWrapper.classList.remove('hidden');
+    }
+
+    confirmBtn.addEventListener('click', () => {
+        const nickname = nicknameInput.value.trim();
+        if (nickname === '') {
+            alert('닉네임을 입력해주세요!');
+            return;
+        }
+        localStorage.setItem('playerNickname', nickname);
+        finalWelcomeMessage.textContent = `${nickname}님, 환영합니다!`;
+        showWelcomeModal();
+        editBtn.classList.remove('hidden');
+    });
+
+    nicknameInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') { confirmBtn.click(); }
+    });
+
+        // "완료" 버튼을 클릭했을 때의 동작
+    completeBtn.addEventListener('click', () => {
+ localStorage.removeItem('clearedStage');
+        localStorage.removeItem('unlocked_stage_5'); // 만약을 위해 다른 스테이지 관련 기록도 삭제
+        localStorage.removeItem('returnedFromStage5'); // 엔딩 관련 기록도 삭제
+        window.location.href = 'loading.html'; // 최종적으로 loading.html로 이동!
+    });
+
+    editBtn.addEventListener('click', () => {
+        editBtn.classList.add('hidden');
+        showNicknameModal();
+        nicknameInput.value = localStorage.getItem('playerNickname');
+    });
+
+            // 페이지가 처음 로드될 때 실행되는 코드
+    document.addEventListener('DOMContentLoaded', () => {
+        const savedNickname = localStorage.getItem('playerNickname');
+
+        // index.html에서 보낸 "새로 시작" 신호가 있는지 확인합니다.
+        if (sessionStorage.getItem('isNewStart')) {
+            // 신호가 있다면, 무조건 닉네임 입력창을 보여줍니다.
+            showNicknameModal();
+            // 확인 후에는 신호를 바로 제거합니다 (새로고침 대비).
+            sessionStorage.removeItem('isNewStart');
+
+        } else if (savedNickname) {
+            // "새로 시작" 신호는 없지만, 저장된 닉네임이 있는 경우 (새로고침 등)
+            // -> 환영창을 보여줍니다.
+            finalWelcomeMessage.textContent = `${savedNickname}님, 환영합니다!`;
+            showWelcomeModal();
+            editBtn.classList.remove('hidden');
+
+        } else {
+            // 신호도 없고, 저장된 닉네임도 없는 완전 처음인 경우
+            // -> 닉네임 입력창을 보여줍니다.
+            showNicknameModal();
+        }
+    });
+  </script>
+</body>
+</html>

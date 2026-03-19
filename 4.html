@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stage 1 - FunCAPTCHA</title>
+  <style>
+    @font-face { font-family: 'SchoolSafetyGoodSupport'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareondotumR.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+    @font-face { font-family: 'SchoolSafetyGoodSupport'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareondotumB.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+    
+    body { margin: 0; height: 100vh; font-family: 'SchoolSafetyGoodSupport', sans-serif; overflow: hidden; position: relative; display: flex; justify-content: center; align-items: center; }
+    html { font-size: clamp(0.98vw, 0.84vw + 1rem, 1.4vw); }
+    
+    /* --- 버튼 공통 스타일 --- */
+    .icon-btn {
+      position: fixed; /* 위치를 화면에 고정 */
+      cursor: pointer;
+      width: 4.3vw; height: 4.3vw;
+      z-index: 100;
+      background-repeat: no-repeat;
+      background-size: contain; background-position: center;
+      transition: transform 0.2s ease;
+    }
+    .icon-btn:hover { transform: scale(1.1); }
+    #back-btn { top: 4%; left: 3%; background-image: url('map/b.png'); }
+    #back-btn:hover { background-image: url('map/-b.png'); }
+    #bgm-btn { top: 4%; left: 8%; background-image: url('map/b2.png'); }
+    #home-btn { top: 4%; right: 3%; background-image: url('map/b4.png'); }
+    #home-btn:hover { background-image: url('map/-b4.png'); }
+    
+    /* --- 1단계: 대화창 화면 --- */
+    #dialogue-screen {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        display: flex; justify-content: center; align-items: center;
+        background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, transparent 15%), linear-gradient(to bottom, #ffff00, #ffffff); 
+        background-size: 15px 15px, 100% 100%; background-repeat: repeat, no-repeat;
+    }
+
+
+   .character { position: absolute; bottom: 0; filter: drop-shadow(0 0 10px #00aaff) drop-shadow(0 0 5px #00aaff); transition: opacity 0.5s ease; }
+    #char1 { left: 50%; bottom: -20vw; transform: translateX(-50%); height: 118vh; z-index: 1; }
+
+    #dialogue-container { 
+        position: fixed; bottom: 7vh; left: 50%; transform: translateX(-50%); width: 80%; max-width: 900px; 
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.85), rgba(240, 245, 255, 1)); 
+        border: 2px solid #003cff; border-radius: 10px; padding: 20px; padding-bottom: 100px; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer; 
+        z-index: 20; transition: opacity 0.5s ease; 
+    }
+    #speaker-name { 
+        position: absolute; top: -60px; left: 0px; 
+        background: linear-gradient(to bottom, #5577ff, #003cff); 
+        color: white; padding: 10px 20px; border-radius: 8px; 
+        font-weight: 800; 
+        font-size: 1.1em; /* 수정: 화자 이름 폰트 크기 조정 */
+        border: 1px solid #003cff; 
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
+    }
+    #dialogue-text { 
+        margin: 0; 
+        font-size: 1em; /* 수정: 대화 텍스트 폰트 크기 조정 */
+        color: #003cff; 
+        line-height: 1.5; 
+    }
+    #next-arrow { position: absolute; bottom: 15px; right: 20px; width: 0; height: 0; border-radius: 0px; border-top: 20px solid transparent; border-bottom: 20px solid transparent; border-left: 30px solid #003cff; animation: bounce 1s infinite; display: none; }
+    @keyframes bounce { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+
+    /* --- 2단계: 문제 풀이 화면 (처음엔 숨겨짐) --- */
+    #funcaptcha-screen {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        display: none; /* 초기에는 숨겨짐 */
+        justify-content: center; align-items: center;
+        background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, transparent 15%), linear-gradient(to bottom, #ffff00, #ffffff); background-size: 15px 15px, 100% 100%; background-repeat: repeat, no-repeat;
+    }
+    #funcaptcha-container { width: 35vw; padding: 1vw; border-radius: 1.26vw; box-shadow: 0 0.56vw 0.84vw rgba(0,0,0,0.25); background: transparent; text-align: center; z-index: 20; display: block; position: relative; padding-bottom: 5.6vw; overflow: hidden; }
+    #funcaptcha-container::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 1.19vw; border: 2px solid #003cff; background: rgba(255, 255, 255, 0); box-shadow: 0 0.42vw 0.742vw 0 rgba(0, 0, 0, 0.50); z-index: -2; }
+    #funcaptcha-container::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 1.26vw; background: linear-gradient(to bottom, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.8), rgb(186, 213, 255) 100%); z-index: -1; border: 1px solid #003cff;}
+    #funcaptcha-container h2 { margin-top: 2.5vw; font-size: 1.1em; color: #003cff; margin-bottom: 1.8vw; line-height: 1.3; }
+    #progress-indicator { margin-bottom: 1.4vw; display: flex; justify-content: center; gap: 0.7vw; position: absolute; top: 1.8vw; left: 50%; transform: translateX(-50%); }
+    .progress-dot { width: 0.84vw; height: 0.84vw; background-color: #C1C1C1; border-radius: 50%; transition: background-color 0.3s ease; border: 0.035vw solid #A0A0A0; }
+    .progress-dot.solved { background-color: #003cff; border: 0.035vw solid #4366ff; }
+    .captcha-image-wrapper { display: flex; justify-content: center; gap: 1.4vw; margin-bottom: 1.4vw; }
+    #captcha-left-panel { width: 13vw; height: 14vw; border-radius: 0.63vw; display: flex; justify-content: center; align-items: center; border: 1px solid  #003cff; background: #F3F3F3; box-shadow: inset 0 0.56vw 0.861vw 0 rgba(0, 0, 0, 0.25); overflow: hidden; position: relative; }
+    #captcha-right-panel-wrapper { width: 17vw; height: 14.1vw; border-radius: 0.63vw; display: flex; justify-content: center; align-items: center; background: linear-gradient(180deg, #043FFF 0%, #003BFF 100%); box-shadow: inset 0 0.56vw 0.385vw 0 rgba(0, 0, 0, 0.25); flex-direction: column; padding: 0.35vw; box-sizing: border-box; position: relative; border: none; }
+    #captcha-left-panel img, #right-captcha-image { max-width: 90%; max-height: 90%; object-fit: contain; }
+    #right-captcha-image { flex-grow: 1; margin-top: 0.35vw; }
+    .rotation-buttons { position: absolute; bottom: 0.35vw; left: 50%; transform: translateX(-50%); display: flex; justify-content: space-between; width: 100%; padding: 0 0.35vw; box-sizing: border-box; }
+    .rotation-buttons button { background: none; border: none; padding: 0; cursor: pointer; width: 2.8vw; height: 2.8vw; display: flex; justify-content: center; align-items: center; transition: transform 0.1s ease; }
+    .rotation-buttons button img { width: 100%; height: 100%; object-fit: contain; }
+    .rotation-buttons button:hover { transform: scale(1.05); }
+    .rotation-buttons button:active { transform: scale(0.95); }
+    #next-captcha-btn { position: absolute; bottom: 2.3vw; right: 2.5vw; width: 7vw; height: 2.8vw; cursor: pointer; transition: all 0.1s ease; background: linear-gradient(to bottom, #5577ff, #003cff); border: 1px solid #003cff; border-radius: 0.56vw; box-shadow: 0 0.21vw 0.28vw 0 rgba(0,0,0,0.25); color: white; font-size: 1.2em; font-weight: bold; font-family: 'SchoolSafetyGoodSupport', sans-serif; }
+    #next-captcha-btn:hover { filter: brightness(1.1); transform: scale(1.03); }
+    #next-captcha-btn:active { transform: scale(0.97); filter: brightness(0.95); box-shadow: inset 0 0.14vw 0.21vw 0 rgba(0,0,0,0.25); }
+  </style>
+</head>
+<body>
+  <audio id="bgm" loop>
+    <source src="bgm.mp3" type="audio/mpeg">
+  </audio>
+  
+  <a href="map.html" id="back-btn" class="icon-btn" aria-label="뒤로가기"></a>
+  <div id="bgm-btn" class="icon-btn" role="button" aria-label="BGM 재생/정지"></div>
+  <a href="index.html" id="home-btn" class="icon-btn" aria-label="홈으로"></a>
+  
+  <div id="dialogue-screen">
+    <img id="char1" class="character" src="die1.gif" alt="주인공 캐릭터">
+    <div id="dialogue-container">
+        <div id="speaker-name">Hellomie</div>
+        <p id="dialogue-text"></p>
+        <div id="next-arrow"></div>
+    </div>
+  </div>
+
+  <div id="funcaptcha-screen">
+    <div id="funcaptcha-container">
+      <div id="progress-indicator"></div>
+      <h2>Please turn the object<br>to the right angle.</h2>
+      <div class="captcha-image-wrapper">
+        <div id="captcha-left-panel"><img id="left-captcha-image" src="" alt="Target Image"></div>
+        <div id="captcha-right-panel-wrapper">
+          <img id="right-captcha-image" src="" alt="Rotatable Image">
+          <div class="rotation-buttons">
+            <button id="rotate-left-btn" aria-label="Rotate Left"><img src="" id="arrow-left-img" alt="Rotate Left"></button>
+            <button id="rotate-right-btn" aria-label="Rotate Right"><img src="" id="arrow-right-img" alt="Rotate Right"></button>
+          </div>
+        </div>
+      </div>
+      <button id="next-captcha-btn">NEXT</button>
+    </div>
+  </div>
+
+  <script>
+    const userNickname = localStorage.getItem('playerNickname') || 'human';
+
+    // --- BGM 제어 스크립트 ---
+    const bgm = document.getElementById("bgm");
+    const bgmBtn = document.getElementById("bgm-btn");
+    let isPlaying = false; 
+    bgmBtn.style.backgroundImage = "url('map/b3.png')";
+    bgmBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (isPlaying) {
+        bgm.pause();
+        isPlaying = false;
+        bgmBtn.style.backgroundImage = "url('map/b3.png')"; 
+      } else {
+        const playPromise = bgm.play();
+        if (playPromise !== undefined) {
+          playPromise.then(_ => {
+            isPlaying = true;
+            bgmBtn.style.backgroundImage = "url('map/b2.png')";
+          }).catch(error => {
+            console.log("BGM 자동재생이 차단되었습니다. 사용자의 클릭이 필요합니다.");
+          });
+        }
+      }
+    });
+    bgmBtn.addEventListener('mouseover', () => {
+        if (isPlaying) { bgmBtn.style.backgroundImage = "url('map/-b2.png')"; } 
+        else { bgmBtn.style.backgroundImage = "url('map/-b3.png')"; }
+        bgmBtn.style.transform = 'scale(1.1)';
+    });
+    bgmBtn.addEventListener('mouseout', () => {
+        if (isPlaying) { bgmBtn.style.backgroundImage = "url('map/b2.png')"; } 
+        else { bgmBtn.style.backgroundImage = "url('map/b3.png')"; }
+        bgmBtn.style.transform = 'scale(1)';
+    });
+
+    // --- 문제 데이터와 전역 변수 ---
+    const FOLDER = '4/';
+    const TOTAL_CAPTCHA_STAGES = 3;
+    const stageData = [
+      { possibleSets: [ { name: 'cat', targetImages: ['h1.png', 'h2.png', 'h3.png', 'h4.png', 'h5.png', 'h7.png'], rotatableImages: ['cat1.png', 'cat2.png', 'cat3.png', 'cat4.png', 'cat5.png', 'cat6.png', 'cat7.png'], mapping: { 'h1.png': 'cat1.png', 'h2.png': 'cat2.png', 'h3.png': 'cat3.png', 'h4.png': 'cat4.png', 'h5.png': 'cat5.png', 'h7.png': 'cat7.png' } }, { name: 'd', targetImages: ['h1.png', 'h2.png', 'h3.png', 'h4.png', 'h5.png', 'h7.png'], rotatableImages: ['d1.png', 'd2.png', 'd3.png', 'd4.png', 'd5.png', 'd6.png', 'd7.png'], mapping: { 'h1.png': 'd1.png', 'h2.png': 'd2.png', 'h3.png': 'd3.png', 'h4.png': 'd4.png', 'h5.png': 'd5.png', 'h7.png': 'd7.png' } }, { name: 't', targetImages: ['h8.png', 'h10.png', 'h11.png', 'h12.png', 'h13.png', 'h14.png'], rotatableImages: ['t8.png', 't10.png', 't11.png', 't12.png', 't13.png', 't14.png'], mapping: { 'h8.png': 't8.png', 'h10.png': 't10.png', 'h11.png': 't11.png', 'h12.png': 't12.png', 'h13.png': 't13.png', 'h14.png': 't14.png' } } ] },
+      { possibleSets: [ { name: 'q', targetImages: ['h1.png', 'h2.png', 'h3.png', 'h4.png', 'h5.png', 'h7.png'], rotatableImages: ['q1.png', 'q2.png', 'q3.png', 'q4.png', 'q5.png', 'q6.png', 'q7.png'], mapping: { 'h1.png': 'q1.png', 'h2.png': 'q2.png', 'h3.png': 'q3.png', 'h4.png': 'q4.png', 'h5.png': 'q5.png', 'h7.png': 'q7.png' } } ] },
+      { possibleSets: [ { name: 'm', targetImages: ['h1.png', 'h2.png', 'h3.png', 'h4.png', 'h5.png', 'h7.png'], rotatableImages: ['m1.png', 'm2.png', 'm3.png', 'm4.png', 'm5.png', 'm6.png', 'm7.png'], mapping: { 'h1.png': 'm1.png', 'h2.png': 'm2.png', 'h3.png': 'm3.png', 'h4.png': 'm4.png', 'h5.png': 'm5.png', 'h7.png': 'm7.png' } } ] }
+    ];
+
+
+    let currentStage = 0, currentRotatableSet = [], currentRotationIndex = 0, correctAnswerImage = '', currentMapping = {};
+    const leftCaptchaImage = document.getElementById('left-captcha-image'), rightCaptchaImage = document.getElementById('right-captcha-image');
+    const rotateLeftBtn = document.getElementById('rotate-left-btn'), rotateRightBtn = document.getElementById('rotate-right-btn');
+    const nextCaptchaBtn = document.getElementById('next-captcha-btn');
+    const progressIndicator = document.getElementById('progress-indicator');
+    let wrongAttempts = 0;
+
+    // --- 대화창 관련 DOM 요소 ---
+    const dialogueScreen = document.getElementById('dialogue-screen');
+    const dialogueContainer = document.getElementById('dialogue-container');
+    const dialogueTextElement = document.getElementById('dialogue-text');
+    const nextArrow = document.getElementById('next-arrow');
+
+    // --- 문제풀이 관련 DOM 요소 ---
+    const funcaptchaScreen = document.getElementById('funcaptcha-screen');
+    const targetWordElement = document.getElementById('captcha-target-word');
+    const imageGrid = document.getElementById('image-grid');
+
+    // --- 페이지 로드 시 초기화 ---
+    document.addEventListener('DOMContentLoaded', () => {
+        setInitialImages();
+        typeWriter(dialogues[currentDialogueIndex]);
+    });
+    
+    // --- 대화창 클릭 이벤트 ---
+    dialogueContainer.addEventListener('click', () => {
+      if (!isTyping) {
+        currentDialogueIndex++;
+        if (currentDialogueIndex < dialogues.length) {
+          typeWriter(dialogues[currentDialogueIndex]);
+        } else {
+          startCaptchaChallenge();
+        }
+      }
+    });
+
+       // --- [수정] 이 부분을 아래 코드로 바꿔주세요 ---
+    const dialogues = [
+      `거의 다 왔어요 ${userNickname}님!... 수고 많으셨어요.`, // userNickname 변수 적용
+      "4번째 stage에서는... 제시된 화살표의 방향과 사진의 방향을 맞추는 퍼즐이 나올 가능성이 커요..." ,"손가락이 지시하는 방향과 사물의 방향을 ...최대한 일치시켜서 Captcha를 풀어보세요!..."
+    ];
+    let currentDialogueIndex = 0, isTyping = false;
+
+    // --- 타이핑 효과 함수 ---
+    function typeWriter(text) {
+      let i = 0;
+      dialogueTextElement.innerHTML = "";
+      isTyping = true;
+      nextArrow.style.display = 'none';
+      const typingInterval = setInterval(() => {
+        if (i < text.length) {
+          dialogueTextElement.innerHTML += text.charAt(i);
+          i++;
+        } else {
+          clearInterval(typingInterval);
+          isTyping = false;
+          nextArrow.style.display = 'block';
+        }
+      }, 50);
+    }
+    
+    // --- 캡차 챌린지 시작 (화면 전환) ---
+    function startCaptchaChallenge() {
+        dialogueScreen.style.display = 'none';
+        funcaptchaScreen.style.display = 'flex';
+        loadNewCaptcha(); // 문제 로드 시작
+    }
+
+    // --- FunCAPTCHA 문제 풀이 스크립트 ---
+    function setInitialImages() {
+        document.getElementById('arrow-left-img').src = `${FOLDER}left.png`;
+        document.getElementById('arrow-right-img').src = `${FOLDER}right.png`;
+    }
+    function updateProgressIndicator() {
+        progressIndicator.innerHTML = '';
+        for (let i = 0; i < TOTAL_CAPTCHA_STAGES; i++) {
+            const dot = document.createElement('span');
+            dot.classList.add('progress-dot');
+            if (i < currentStage) { dot.classList.add('solved'); }
+            progressIndicator.appendChild(dot);
+        }
+    }
+    function loadNewCaptcha() {
+        if (currentStage >= TOTAL_CAPTCHA_STAGES) {
+            clearStage1();
+            return;
+        }
+        const stage = stageData[currentStage];
+        const currentSet = stage.possibleSets[Math.floor(Math.random() * stage.possibleSets.length)];
+        currentMapping = currentSet.mapping;
+        currentRotatableSet = currentSet.rotatableImages;
+        const targetImages = currentSet.targetImages;
+        const targetImage = targetImages[Math.floor(Math.random() * targetImages.length)];
+        leftCaptchaImage.src = `${FOLDER}${targetImage}`;
+        correctAnswerImage = currentMapping[targetImage];
+        let initialImage;
+        do { initialImage = currentRotatableSet[Math.floor(Math.random() * currentRotatableSet.length)]; }
+        while (initialImage === correctAnswerImage && currentRotatableSet.length > 1);
+        rightCaptchaImage.src = `${FOLDER}${initialImage}`;
+        currentRotationIndex = currentRotatableSet.indexOf(initialImage);
+        wrongAttempts = 0;
+        updateProgressIndicator();
+    }
+    function rotate(direction) {
+        if (currentRotatableSet.length === 0) return;
+        const len = currentRotatableSet.length;
+        currentRotationIndex = (currentRotationIndex + direction + len) % len;
+        rightCaptchaImage.src = `${FOLDER}${currentRotatableSet[currentRotationIndex]}`;
+    }
+             function checkAnswer() {
+        // --- 정답을 맞혔을 때의 로직 ---
+        if (currentRotatableSet[currentRotationIndex] === correctAnswerImage) {
+            currentStage++; 
+            updateProgressIndicator();
+
+            if (currentStage >= TOTAL_CAPTCHA_STAGES) {
+                // [성공] 모든 스테이지를 클리어한 경우
+                alert("[Easter Egg]축하합니다! 성공적으로 맞추셨어요!");
+                // 배달부에게 "성공 편지"를 전달합니다.
+                setTimeout(() => { 
+                    clearStage1('문제를 해결했습니다! Stage 4 클리어!'); 
+                }, 500);
+            } else {
+                // [성공] 중간 스테이지를 클리어한 경우
+                alert("정⊗답입n다!! 다음 問제로 넘ξ어갑니다.");
+                loadNewCaptcha();
+            }
+        } 
+        // --- 오답일 때의 로직 ---
+        else {
+            wrongAttempts++;
+            
+            if (wrongAttempts >= 3) {
+                // 3번 틀렸을 때
+                currentStage++;
+                
+                if (currentStage >= TOTAL_CAPTCHA_STAGES) {
+                    // [실패] 마지막 스테이지에서 3번 틀려서 강제 통과되는 경우
+                    alert("!!ERRΩR!! ::: pr0cξss ▒▒▒ d@t@ corr∑pt");
+                    // 배달부에게 "강제 통과 편지"를 전달합니다.
+                    setTimeout(() => {
+                        clearStage1("!!ERRΩR!! ::: pr0cξss ▒▒▒ d@t@ corr∑pt → nxτ 問題→");
+                    }, 500);
+                } else {
+                    // [실패] 중간 스테이지에서 3번 틀려서 다음 문제로 넘어가는 경우
+                    alert("!!ERRΩR!! ::: pr0cξss ▒▒▒ d@t@ corr∑pt → nxτ 問題→");
+                    loadNewCaptcha();
+                }
+            } else {
+                // 아직 3번 미만으로 틀렸을 때
+                alert("!!! ERR0R ::: Je0ng-d@p≠ 아닙nida ▒▒ re-try 해주세∑요");
+            }
+        }
+    }
+    
+    function clearStage1(finalMessage) { // (finalMessage) 라는 '바구니'를 추가
+        document.getElementById('funcaptcha-container').style.display = 'none';
+        localStorage.setItem('clearedStage', '4');
+        localStorage.setItem('unlocked_stage_5', 'true');
+        alert(finalMessage); // 바구니에 담겨온 메시지를 보여줌
+        setTimeout(() => { window.location.href = 'map.html'; }, 1000);
+    }
+
+    rotateLeftBtn.addEventListener('click', () => rotate(-1));
+    rotateRightBtn.addEventListener('click', () => rotate(1));
+    nextCaptchaBtn.addEventListener('click', checkAnswer);
+    setInitialImages();
+  </script>
+</body>
+</html>

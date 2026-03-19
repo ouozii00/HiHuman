@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hellomie Intro</title>
+    <style>
+        /* 폰트 로드 */
+        @font-face {
+            font-family: 'SchoolSafetyGoodSupport';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareondotumR.woff2') format('woff2');
+            font-weight: 400;
+            font-display: swap;
+        }
+        @font-face {
+            font-family: 'SchoolSafetyGoodSupport';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareondotumB.woff2') format('woff2');
+            font-weight: 700;
+            font-display: swap;
+        }
+
+      body {
+      margin: 0;
+      height: 100vh;
+      background: url('map/bg.png') no-repeat center center;
+      background-size: cover;
+      background-attachment: fixed;
+      font-family: 'SchoolSafetyGoodSupport', sans-serif;
+      position: relative;
+    }
+    
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('map/halftone_pattern.png') repeat;
+      opacity: 0.15;
+      z-index: 1;
+      pointer-events: none;
+    }
+        /* 인트로 씬 (캐릭터와 배경) */
+        #intro-scene {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            /* 중요: 'intro-bg.jpg'를 실제 배경 이미지 경로로 변경하세요. */
+            /* 배경이 필요 없다면 이 줄을 삭제하세요. */
+            background-image: url('intro-bg.jpg'); 
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+        }
+        
+        #opening-character {
+            filter: drop-shadow(0 0 10px #00aaff) drop-shadow(0 0 5px #00aaff); 
+            position: absolute;
+             left: 55%; bottom: -20vw; transform: translateX(-50%); height: 118vh; z-index: 1;
+        }
+
+        /* 대화창 스타일 */
+        #dialogue-container {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 900px;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.85), rgba(240, 245, 255, 1));
+            border: 2px solid #003fff;
+            border-radius: 10px;
+            padding: 20px;
+            padding-bottom: 80px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 9999; /* 항상 제일 위에 */
+            transition: opacity 0.5s ease;
+            opacity: 1;
+        }
+        #dialogue-container.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #speaker-name {
+            position: absolute;
+            top: -60px;
+            left: 0px;
+            background: linear-gradient(to bottom, #a0b7ff, #003fff);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1.5em;
+            border: 2px solid #003fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            font-weight: 700;
+        }
+        #dialogue-text {
+            margin: 0;
+            font-size: 1.5em;
+            color: #003fff;
+            line-height: 1.5;
+            min-height: 45px;
+        }
+        #next-arrow {
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
+            width: 0;
+            height: 0;
+            border-top: 20px solid transparent;
+            border-bottom: 20px solid transparent;
+            border-left: 30px solid #003fff;
+            animation: bounce-horizontal 1s infinite;
+            display: none;
+        }
+        @keyframes bounce-horizontal {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(5px); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="intro-scene">
+        <img id="opening-character" src="hellomie.gif" alt="Hellomie Character">
+    </div>
+
+    <div id="dialogue-container" class="hidden">
+        <div id="speaker-name"></div>
+        <p id="dialogue-text"></p>
+        <div id="next-arrow"></div>
+    </div>
+
+    <script>
+
+        // 1. 필요한 요소 가져오기
+        const dialogueContainer = document.getElementById('dialogue-container');
+        const speakerName = document.getElementById('speaker-name');
+        const dialogueText = document.getElementById('dialogue-text');
+        const nextArrow = document.getElementById('next-arrow');
+
+        // 2. 닉네임 가져오기
+        const userNickname = localStorage.getItem('playerNickname') || '방문자';
+
+        // 3. 헬로미 스크립트 정의
+         const hellomieScript = [
+            // [수정] 첫 번째 대사의 따옴표를 백틱(`)으로 변경하여 닉네임 변수가 적용되도록 합니다.
+            { name: "Hellomie", text: `안녕, ${userNickname}. 만나서 반가워! <br> 나는 이 서버 세계에서 데이터를 정리하는 관리자 헬로미야.` },
+            
+            // (아래 대사들은 그대로 둡니다)
+            { name: "Hellomie", text: "나는 주로 캡챠 시스템을 통해서 방문자가 ‘진짜 인간’인지 판별하는 일을 해." },
+            { name: "Hellomie", text: "그런데 점점 기술력 발전으로 로봇과 인간을 구별하는 일이 어려워지고 있어서 문제 난이도 조정과 전체 시스템 점검이 필요한 상황이야." },
+           
+            { name: "Hellomie", text: "나와 함께 시스템 점검을 도와줄 수 있을까?" },
+
+            { name: "Hellomie", text: "점검해야 할 캡챠의 종류는 총 5가지야. 인간인 너는 인간으로서 각 종류의 캡차 난이도가 적절한지 판별을 도와주면 돼." },
+
+            { name: "Hellomie", text: "고마워!" }
+        ];
+
+        // --- 4. 대화 시스템 스크립트 ---
+        let currentDialogueScript = [], currentDialogueIndex = 0, isTyping = false, typingTimeout, onDialogueComplete;
+
+        function typeWriter(text, i) {
+            if (i < text.length) {
+                dialogueText.innerHTML = text.substring(0, i + 1);
+                typingTimeout = setTimeout(() => typeWriter(text, i + 1), 50); // 타이핑 속도
+            } else {
+                isTyping = false;
+                nextArrow.style.display = 'block';
+            }
+        }
+
+        function showDialogueLine() {
+            const line = currentDialogueScript[currentDialogueIndex];
+            if (!line) {
+                endDialogue(); // 대화가 끝나면 endDialogue 호출
+                return;
+            }
+            speakerName.textContent = line.name;
+            dialogueText.innerHTML = '';
+            nextArrow.style.display = 'none';
+            isTyping = true;
+            typeWriter(line.text, 0);
+        }
+
+        function nextDialogue() {
+            if (isTyping) {
+                // 타이핑 중 클릭하면 텍스트 즉시 완성
+                clearTimeout(typingTimeout);
+                isTyping = false;
+                dialogueText.innerHTML = currentDialogueScript[currentDialogueIndex].text;
+                nextArrow.style.display = 'block';
+                return;
+            }
+            // 다음 줄로 이동
+            currentDialogueIndex++;
+            if (currentDialogueIndex < currentDialogueScript.length) {
+                showDialogueLine();
+            } else {
+                endDialogue(); // 모든 대화가 끝남
+            }
+        }
+
+        function startDialogue(script, onCompleteCallback) {
+            currentDialogueScript = script;
+            currentDialogueIndex = 0;
+            onDialogueComplete = onCompleteCallback;
+            dialogueContainer.classList.remove('hidden'); // 대화창 보이기
+            showDialogueLine();
+        }
+
+        function endDialogue() {
+            dialogueContainer.classList.add('hidden'); // 대화창 숨기기
+            if (typeof onDialogueComplete === 'function') {
+                onDialogueComplete(); // 완료 콜백 실행
+            }
+        }
+        
+        // 대화창 클릭 이벤트 리스너
+        dialogueContainer.addEventListener('click', nextDialogue);
+
+        // --- 5. 인트로 시작 ---
+
+        // 대화가 모두 끝나면 실행할 함수
+        // 대화가 모두 끝나면 실행할 함수
+        function onIntroComplete() {
+            console.log("헬로미 인트로가 끝났습니다. map.html로 이동합니다.");
+            
+            // map.html 페이지로 이동
+            window.location.href = 'map.html';
+        }
+        // 페이지가 로드되면 바로 헬로미 인트로 시작
+        window.addEventListener('load', () => {
+            startDialogue(hellomieScript, onIntroComplete);
+        });
+
+    </script>
+</body>
+</html>

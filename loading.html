@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading...</title>
+    <style>
+        /* index.html과 동일한 폰트 설정 */
+
+        @font-face {
+      font-family: 'SchoolSafetyGoodSupport';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareondotumR.woff2') format('woff2');
+      font-weight: 400;
+      font-display: swap;
+    }
+
+
+       @font-face {
+            font-family: 'SchoolSafetyGoodSupport';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareondotumB.woff2') format('woff2');
+            font-weight: 700;
+            font-display: swap;
+        }
+
+        body {
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'SchoolSafetyGoodSupport', sans-serif;
+            background-color: rgb(0, 55, 255); /* 이미지와 동일한 파란색 배경 */
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-container {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 걷는 캐릭터 GIF 스타일 */
+        #character-gif {
+            width: 17vw;       
+            max-width: 200px;  
+            height: auto;
+            margin-bottom: 30px;
+            /* ✨ 캐릭터가 빛나는 효과! */
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.7));
+            transform: scaleX(-1);
+        }
+
+        /* 프로그레스 바 (바깥 테두리) */
+        .progress-bar {
+            width: 25vw;
+            max-width: 500px;
+            height: 1.8vw;
+            background-color:white; /* 살짝 어두운 파란 배경 */
+            border: 0.24vw solid white;
+            border-radius: 25px; /* 동그란 모서리 */
+            overflow: hidden;    /* 내부 바가 삐져나오지 않도록 함 */
+            margin-bottom: 17px;
+        }
+
+        /* 프로그레스 바 (채워지는 부분) */
+        .progress-fill {
+            width: 0; /* 처음엔 0% */
+            height: 100%;
+            background-color: rgb(0, 55, 255);
+            border-radius: 20px;
+            animation: fill-bar 3s linear forwards;}
+
+        
+        /* Loading... 텍스트 */
+        .loading-text {
+            font-size: 1.1vw;
+            font-weight: 400;
+        }
+
+        /* 프로그레스 바 애니메이션 정의 */
+        @keyframes fill-bar {
+            from { width: 0%; }
+            to   { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="loading-container">
+        <!-- 1. 걷는 캐릭터 GIF -->
+        <img src="loading/walking.gif" alt="Loading..." id="character-gif" style="margin-bottom: 0px;">
+        
+        <!-- 2. 프로그레스 바 -->
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+
+        <!-- 3. 로딩 텍스트 -->
+        <p class="loading-text" style="margin-top: 0px; margin-bottom: 0px;">Loading...</p>
+    </div>
+
+
+    <script>
+        // --- 이 부분을 원하는 대로 수정하세요! ---
+
+        // 1. 로딩이 끝난 후 이동할 최종 페이지 주소
+         const nextPage = 'intro.html';
+        // 2. 로딩 화면을 보여줄 시간 (3000ms = 3초)
+        // ✨ CSS 애니메이션 시간(3s)과 일치시키는 것이 가장 자연스럽습니다.
+        const loadingDuration = 3000;
+
+        // ----------------------------------------
+
+        // 지정된 시간이 지나면 다음 페이지로 자동 이동
+        setTimeout(() => {
+           window.location.href = nextPage;}, loadingDuration);
+    </script>
+
+</body>
+</html>

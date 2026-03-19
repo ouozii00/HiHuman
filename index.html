@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hi Human - Intro</title>
+  <style>
+    @font-face {
+      font-family: 'SchoolSafetyGoodSupport';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareondotumR.woff2') format('woff2');
+      font-weight: 400; font-display: swap;
+    }
+    @font-face {
+      font-family: 'SchoolSafetyGoodSupport';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareondotumB.woff2') format('woff2');
+      font-weight: 700; font-display: swap;
+    }
+
+    /* 스크롤바를 숨기고 부드러운 스크롤 준비 */
+    html, body {
+      margin: 0;
+      height: 100vh;
+      overflow: hidden; /* 스크롤바 숨기기 */
+      font-family: 'SchoolSafetyGoodSupport', sans-serif;
+    }
+
+    /* --- 파티클 효과를 위한 캔버스 --- */
+    #screen {
+      position: fixed; /* 화면에 고정되어 스크롤을 따라가지 않음 */
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 1; /* 배경보다는 위, 콘텐츠보다는 아래 */
+      pointer-events: none;
+    }
+
+    /* --- 화면 섹션 공통 스타일 --- */
+    .screen-section {
+      width: 100%;
+      height: 100vh; /* 각 섹션이 화면 높이를 꽉 채움 */
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    /* --- 1. 첫 번째 인트로 화면 --- */
+    #intro-screen {
+      background-color: rgb(0, 55, 255);
+      cursor: pointer;
+    }
+    #intro-screen img {
+      width: 39vw;
+      max-width: 600px;
+      height: auto;
+      z-index: 2;
+      animation: floating 3s ease-in-out infinite;  /* 파티클보다 위에 보이도록 */
+    }
+
+    /* --- 2. 두 번째 메인 메뉴 화면 --- */
+    #main-menu-screen {
+      --gradient-start: #003cff; 
+      --gradient-end: #ffffff;   
+      --dot-color: rgba(0, 0, 0, 0.05); 
+      --dot-size: 2px;     
+      --dot-spacing: 8px;
+
+      background-image:
+        radial-gradient(circle, var(--dot-color) var(--dot-size), transparent 0),
+        linear-gradient(to top, var(--gradient-end), var(--gradient-start));
+      background-size: var(--dot-spacing) var(--dot-spacing), cover;
+    }
+
+    /* 메인 메뉴 화면의 요소들 */
+.menu-element {
+    position: absolute;
+}
+
+/* 배경 행성: 가장 아래 */
+#background-planet {
+    width: 120%;
+    height: auto;
+    opacity: 0.9;
+    z-index: 1;
+}
+
+#character-main {
+    bottom: -40%; right: -5%;
+    width: 61vw; 
+    z-index: 2;
+}
+
+/* 헬로미 GIF: 항상 위 */
+#character-mascot {
+    bottom: -40%; right: 0%;
+    width: 55vw; 
+    z-index: 20; /* 다른 요소들보다 위 */
+}
+
+/* 게임 로고: 헬로미 뒤지만 캐릭터보다는 위 */
+#game-logo {
+    top: 16%; left: 8%;
+    width: 36vw;
+    animation: floating 3s ease-in-out infinite;
+    z-index: 3;
+}
+
+/* 메뉴 버튼들: 헬로미 위 */
+.menu-buttons {
+    bottom: 20%; left: 5%;
+    display: flex; flex-direction: column;
+    z-index: 11;
+}
+
+/* 대화 상자: 버튼과 헬로미 위 */
+.dialogue-box {
+    bottom: 5%; left: 5%;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 2px solid #003CFF; border-radius: 10px;
+    padding: 15px; color: #043fff;
+    text-align: left; font-size: 1.2vw;
+    z-index: 12;
+}
+
+    /* 로고가 위아래로 살짝 움직이는 애니메이션 정의 */
+    @keyframes floating {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); } /* 10px 위로 이동 */
+        100% { transform: translateY(0px); }
+    }
+
+
+    #character-main {
+        bottom: -45%; right: -1%;
+        width: 66vw; 
+        z-index: 15; 
+    }
+  
+  
+    .menu-buttons button {
+        font-family: 'SchoolSafetyGoodSupport', sans-serif;
+        font-size: 1.4vw; font-weight: 700;
+        color: #003CFF;
+        border-radius: 100px;
+        border: 2px solid #003CFF;
+        background: linear-gradient(180deg, #FFF -22.79%, #9DB4FF 138.97%);
+        padding: 10px 30px; margin-bottom: 17px;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+    .menu-buttons button:hover {
+    border: 2px solid #FFF;
+    background: linear-gradient(180deg, #B2C9FF -22.79%, #003BFE 138.97%); color: white;
+    transform: scale(1.1);
+    }
+    
+  
+    .dialogue-box .speaker { font-weight: 700; font-size: 1.2vw;}
+  </style>
+</head>
+<body>
+  <audio id="bgm" loop><source src="bgm.mp3" type="audio/mpeg"></audio>
+  <canvas id="screen"></canvas>
+
+  <div id="intro-screen" class="screen-section">
+    <img src="index/logo.png" alt="Hi Human Start Logo">
+  </div>
+
+
+
+  <div id="main-menu-screen" class="screen-section">
+    <img src="login/b.png" id="edit-nickname-btn" class="hidden" alt="닉네임 변경" style="position: absolute; top: 4%; left: 3%; width: 4.3vw; height: auto; z-index: 20;">
+    <img src="path/to/planet-background.png" id="background-planet" class="menu-element" alt="Background">
+    <img src="index/logo.png" id="game-logo" class="menu-element" alt="Hi Human Logo">
+    <img src="index/world.png" id="character-main" class="menu-element" alt="Main Character">
+    <img src="index/hellome.gif" id="character-mascot" class="menu-element" alt="Mascot">
+    
+    <div class="menu-buttons menu-element">
+        <a href="howtoplay.html"><button>How to Play</button></a>
+        <a href="login.html"><button id="game-start-btn">Game Start</button></a>
+    </div>
+
+    <div class="dialogue-box menu-element">
+        <div class="speaker">Hellomie</div>
+        <p>Hi human! 에 접속하신 것을 환영합니다!</p>
+    </div>
+  </div>
+
+  <script>
+    // Canvas 애니메이션 코드는 이전과 동일
+    const canvas = document.getElementById("screen"); const ctx = canvas.getContext("2d"); let w, h; function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; } window.addEventListener("resize", resize); resize(); class Circle { constructor() {this.reset();} reset() { this.x = Math.random() * w; this.y = Math.random() * h; this.r = Math.random() * 10 + 5; this.dx = (Math.random() - 0.5) * 1.5; this.dy = (Math.random() - 0.5) * 1.5; this.color = `hsl(${Math.random() * 360}, 100%, 60%)`; } draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill(); } update() { this.x += this.dx; this.y += this.dy; if(this.x < this.r || this.x > w - this.r) this.dx *= -1; if(this.y < this.r || this.y > h - this.r) this.dy *= -1; this.draw(); } } let circles = []; for(let i = 0; i < 50; i++) { circles.push(new Circle()); } function animate() { ctx.clearRect(0, 0, w, h); circles.forEach(c => c.update()); requestAnimationFrame(animate); } animate();
+
+    /** [수정] 인트로 화면 전환 로직 **/
+    const introScreen = document.getElementById('intro-screen');
+    const mainMenuScreen = document.getElementById('main-menu-screen');
+    const bgm = document.getElementById('bgm');
+
+    // introScreen을 한 번만 클릭할 수 있도록 once: true 옵션 사용
+    introScreen.addEventListener('click', () => {
+      // 1. BGM 재생
+      bgm.play().catch(error => {
+        // 사용자가 상호작용하기 전에 재생을 시도하면 에러가 날 수 있으므로 콘솔에만 표시
+        console.log("BGM 재생 에러:", error);
+      });
+
+      // 2. 메인 메뉴 화면으로 부드럽게 스크롤
+      mainMenuScreen.scrollIntoView({ behavior: 'smooth' });
+
+    });
+
+          // "Game Start" 버튼을 찾습니다.
+    const gameStartBtn = document.getElementById('game-start-btn');
+
+    // 버튼이 존재하는지 확인합니다.
+    if (gameStartBtn) {
+        // 버튼을 클릭했을 때의 동작을 정의합니다.
+        gameStartBtn.addEventListener('click', () => {
+            // "이제 막 새로 시작했다"는 신호를 sessionStorage에 저장합니다.
+            sessionStorage.setItem('isNewStart', 'true');
+            
+            // 참고: 이 코드가 실행된 후, HTML의 <a href="login.html"> 에 의해
+            // login.html 페이지로 자동으로 이동하게 됩니다.
+        });
+    }
+
+    // --- '뒤로 가기' 버튼 기능 추가 (오류 방지 코드 포함) ---
+
+const backBtn = document.getElementById('edit-nickname-btn');
+if (backBtn) {
+
+    // [기능 1] '클릭' 이벤트: 뒤로 가기
+    backBtn.addEventListener('click', () => {
+        // introScreen 요소가 유효할 때만 스크롤 기능을 실행합니다.
+        if (introScreen) {
+            introScreen.scrollIntoView({ behavior: 'smooth' });
+        } else {
+            console.error("오류: 스크롤할 대상인 'intro-screen' 요소를 찾을 수 없습니다.");
+        }
+    });
+
+    // [기능 2] '호버' 이벤트: 이미지 변경
+    backBtn.addEventListener('mouseover', () => {
+        backBtn.src = 'index/-b.png'; // 이미지를 '-b.png'로 변경
+    });
+
+    backBtn.addEventListener('mouseout', () => {
+        backBtn.src = 'login/b.png'; // 이미지를 원래 'b.png'로 되돌림
+    });
+
+} else {
+    console.warn("경고: id가 'edit-nickname-btn'인 요소를 찾지 못했습니다. 스크립트가 정상적으로 실행되지 않을 수 있습니다.");
+}
+
+
+
+  </script>
+</body>
+</html>

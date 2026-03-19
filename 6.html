@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Integrated reCAPTCHA UI with Dynamic Dots</title>
+    
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/sunn-us/SUIT@2/fonts/static/SUIT.css">
+    <style>
+        @font-face { font-family: 'SchoolSafetyGoodSupport'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareondotumR.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+        @font-face { font-family: 'SchoolSafetyGoodSupport'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareondotumB.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+
+        body { 
+            margin: 0; 
+            height: 100vh; 
+            font-family: 'SchoolSafetyGoodSupport', sans-serif; 
+            overflow: hidden; 
+            position: relative; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            background: radial-gradient(circle, rgba(0,63,255,0.25) 0%, transparent 15%), linear-gradient(to bottom, #ffffff, #9fc1ff); 
+            background-size: 15px 15px, 100% 100%; 
+            background-repeat: repeat, no-repeat;
+        }
+
+        .hidden {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        /* --- 화면 전환 효과 --- */
+        #flash-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            opacity: 0;
+            z-index: 10000;
+            pointer-events: none;
+            transition: opacity 0.2s ease-out;
+        }
+
+        /* --- 블루스크린(BSOD) 스타일 --- */
+        #bsod-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #003fff;
+            color: #FFFFFF;
+            font-family: 'SchoolSafetyGoodSupport', 'Lucida Console', 'Courier New', monospace;
+            z-index: 9998;
+            padding: 1em;
+            box-sizing: border-box;
+            opacity: 1;
+            transition: opacity 1.5s ease-in-out;
+            overflow: hidden;
+            animation: screen-flicker 1s infinite steps(1, end);
+        }
+        
+        /* '지지직' 노이즈 오버레이 */
+        #bsod-overlay::after {
+            content: "";
+            position: absolute;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAiIGhlaWdodD0iMTAwIiB2aWV3Qm9wPSIwIDAgMTAwIDEwMCI+PGZpbHRlciBpZD0iYSI+PGZlVHVyYnVsZW5jZSBiYXNlRnJlcXVlbmN5PSIwLjc1IiBzdGl0Y2hUaWxlcz0ic3RpdGNoIiB0eXBlPSJmcmFjdGFsTm9pc2UiLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsdGVyPSJ1cmwoI2EpIiBvcGFjaXR5PSIwLjE1Ii8+PC9zdmc+');
+            z-index: 1;
+            pointer-events: none;
+            animation: noise-pan 0.2s infinite linear;
+        }
+        
+        /* --- 글리치 캔버스 스타일 --- */
+        #glitch-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1; /* 노이즈(::after)보다는 위, 텍스트/캐릭터(z-index: 2)보다는 아래 */
+            pointer-events: none;
+        }
+
+        #bsod-overlay .bsod-text {
+            line-height: 1.3; 
+            font-size: 0.9em; 
+            animation: text-glitch 1.5s infinite linear;
+            position: relative; 
+            z-index: 2;
+        }
+        
+        #bsod-overlay .bsod-text span {
+            background-color: #FFFFFF;
+            color: #003fff;
+            padding: 0 5px;
+        }
+        
+        /* 타이핑 텍스트 및 커서 */
+        #bsod-text-content {
+            margin: 0;
+            white-space: pre-wrap; 
+            word-break: break-all; 
+        }
+        #bsod-caret {
+            animation: blink 1s infinite steps(1, end);
+        }
+
+        #error-character {
+            position: absolute;
+            /* 기존 중앙 정렬 속성 제거 또는 주석 처리 */
+            /* top: 50%; */
+            /* left: 50%; */
+            /* transform: translate(-50%, -50%); */ /* 중앙 정렬 */
+
+            /* [수정] 아래 속성들을 사용하여 하단에서 위치 조정 */
+            left: 50%; /* 가로 중앙 유지 */
+            transform: translateX(-50%); /* 가로 중앙만 유지 */
+            bottom: -120vh; /* 원하는 만큼 아래로 내립니다. 이 값을 조절하여 위치를 변경하세요. */
+            
+            width: 50vw;
+            filter: drop-shadow(0 0 15px rgba(255,255,255,0.5));
+            animation: glitch 3s infinite steps(2, end);
+            opacity: 0.8; 
+            z-index: 2; 
+        }
+
+        /* --- [수정됨] 글리치 애니메이션 중앙 정렬 유지 --- */
+        @keyframes glitch {
+            0%, 100% { opacity: 0.8; transform: translate(-50%, -50%); } 
+            20% { opacity: 0.8; transform: translate(-50%, -50%); } 
+            21% { opacity: 0.6; transform: translate(-50%, -50%) skew(-5deg) translateX(5px); } 
+            22% { opacity: 0.8; transform: translate(-50%, -50%); } 
+            40% { opacity: 0.8; transform: translate(-50%, -50%); } 
+            41% { opacity: 0; transform: translate(-50%, -50%) translateX(-10px); } 
+            42% { opacity: 0.8; transform: translate(-50%, -50%); } 
+            60% { opacity: 0.8; transform: translate(-50%, -50%); } 
+            61% { opacity: 0.7; transform: translate(-50%, -50%) skew(3deg) translateY(3px); } 
+            62% { opacity: 0.8; transform: translate(-50%, -50%); }
+        }
+        
+        /* 텍스트 글리치 애니메이션 */
+        @keyframes text-glitch {
+            0%, 100% { transform: none; text-shadow: none; }
+            15% { transform: translate(1px, -1px); text-shadow: -1px 0 1px rgba(255,0,0,0.5), 1px 0 1px rgba(0,255,255,0.5); }
+            30% { transform: none; text-shadow: none; }
+            45% { transform: translate(-1px, 1px); text-shadow: -1px 0 1px rgba(255,0,0,0.5), 1px 0 1px rgba(0,255,255,0.5); }
+            60% { transform: none; text-shadow: none; }
+            75% { transform: translate(1px, 1px); text-shadow: -1px 0 1px rgba(255,0,0,0.5), 1px 0 1px rgba(0,255,255,0.5); }
+            90% { transform: none; text-shadow: none; }
+        }
+
+        /* 노이즈(지지직) 애니메이션 */
+        @keyframes noise-pan {
+            0% { transform: translate(0, 0); }
+            10% { transform: translate(-5%, -10%); }
+            20% { transform: translate(-15%, 5%); }
+            30% { transform: translate(7%, -25%); }
+            40% { transform: translate(-5%, 25%); }
+            50% { transform: translate(-15%, 10%); }
+            60% { transform: translate(15%, 0%); }
+            70% { transform: translate(0%, 15%); }
+            80% { transform: translate(3%, 35%); }
+            90% { transform: translate(-10%, 10%); }
+            100% { transform: translate(0, 0); }
+        }
+        
+        /* 화면 번쩍임 애니메이션 */
+        @keyframes screen-flicker {
+            0%, 100% { opacity: 1; }
+            5% { opacity: 0.85; }
+            10% { opacity: 1; }
+            20% { opacity: 0.8; }
+            25% { opacity: 1; }
+            40% { opacity: 0.9; }
+            42% { opacity: 1; }
+            60% { opacity: 1; }
+            62% { opacity: 0.75; }
+            65% { opacity: 1; }
+        }
+
+        /* 커서 깜빡임 */
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+
+        /* --- 메인 콘텐츠 (초기 상태: 숨김) --- */
+        #main-content {
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+
+        /* --- 대화창 스타일 (기존과 동일) --- */
+        #dialogue-container { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); width: 80%; max-width: 900px; background: linear-gradient(to bottom, rgba(255, 255, 255, 0.4), rgba(240, 245, 255, 1)); border: 2px solid #003fff; border-radius: 10px; padding: 20px; padding-bottom: 80px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 9999; transition: opacity 0.5s ease; }
+        #speaker-name { position: absolute; top: -50px; left: 0px; background: linear-gradient(to bottom, #a0b7ff, #003fff); color: white; padding: 10px 20px; border-radius: 8px; font-size: 1.5em; border: 2px solid #003fff; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        #dialogue-text { margin: 0; font-size: 1.5em; color: #003fff; line-height: 1.5; min-height: 45px; }
+        #next-arrow { position: absolute; bottom: 15px; right: 20px; width: 0; height: 0; border-top: 20px solid transparent; border-bottom: 20px solid transparent; border-left: 30px solid #003fff; animation: bounce-horizontal 1s infinite; display: none; }
+        @keyframes bounce-horizontal { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+
+        /* --- 나머지 스타일 (버튼, 캔버스, 캡차 등)은 기존과 동일 --- */
+        .icon-btn { position: absolute; cursor: pointer; width: 4.3vw; height: 4.3vw; z-index: 100; background-repeat: no-repeat; background-size: contain; background-position: center; transition: transform 0.2s ease, background-image 0.2s ease; }
+        .icon-btn:hover { transform: scale(1.1); }
+        #back-btn { top: 4%; left: 3%; background-image: url('map/b.png'); }
+        #back-btn:hover { background-image: url('map/-b.png'); }
+        #bgm-btn { top: 4%; left: 8%; background-image: url('map/b2.png'); }
+        #home-btn { top: 4%; right: 3%; background-image: url('map/b4.png'); }
+        #home-btn:hover { background-image: url('map/-b4.png'); }
+        canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; z-index: 1; opacity: 1; transition: opacity 1s ease-in-out; pointer-events: none; }
+        canvas.hidden { opacity: 0; pointer-events: none; }
+        .captcha-wrapper { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; }
+        .captcha-container { width: 400px; height: 100px; background-color: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 2px solid rgba(0, 63, 255, 1); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; transition: all 0.3s ease-in-out; cursor: default; }
+        .checkbox-container { display: flex; align-items: center; font-size: 20px; color: #003fff; flex-grow: 1; }
+        .robot-checkbox { width: 30px; height: 30px; margin-right: 15px; cursor: pointer; }
+        .checkbox-container label { font-weight: bold; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-spinner { width: 30px; height: 30px; border: 4px solid rgba(0, 63, 255, 0.2); border-top: 4px solid #003fff; border-radius: 50%; animation: spin 1s linear infinite; visibility: hidden; }
+        .loading-spinner.animating { visibility: visible; }
+        @keyframes fill-circle { 0% { border-top-color: #003fff; } 100% { border-color: #003fff; } }
+        .loading-spinner.filled { animation: none; border: 4px solid #003fff; animation: fill-circle 1s forwards; }
+        #bg-video { position: fixed; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; opacity: 0; transition: opacity 1s ease-in-out; }
+        #bg-video.visible { opacity: 1; }
+
+    </style>
+</head>
+<body onmousemove="handleBodyMouseMove(event)">
+
+    <div id="flash-overlay"></div>
+
+    <div id="bsod-overlay">
+        <canvas id="glitch-canvas"></canvas>
+
+        <img id="error-character" src="6/dark.gif" alt="Glitching Character">
+        <div class="bsod-text">
+            <span>A problem has been detected and system has been shut down to prevent damage to your computer.</span>
+            
+            <pre id="bsod-text-content">
+<br>UNMOUNTABLE_BOOT_VOLUME<br><br>
+If this is the first time you've seen this Stop error screen, 
+restart your computer. If this screen appears again, follow 
+these steps:<br><br>
+Check to make sure any new hardware or software is properly 
+installed. If this is a new installation, ask your hardware or 
+software manufacturer for any updates you might need.<br><br>
+If problems continue, disable or remove any newly installed 
+hardware or software. Disable BIOS memory options such as 
+caching or shadowing.<br><br>
+Technical information:<br><br>
+*** STOP: 0x000000ED (0x8A4B39F8, 0xC0000006, 0x00000000, 0x00000000)
+<br>
+Beginning dump of physical memory.
+Physical memory dump complete.
+Contact your system administrator or technical support group.
+
+Dumping memory at 0x00010000 - 0x00FFFFFF
+0x00010000: 8A 4B 39 F8 C0 00 00 06 00 00 00 00 00 00 00 00
+0x00010010: E0 11 9F 8A 4B 39 F8 C0 00 00 06 00 00 00 00 00
+0x00010020: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0x00010030: 4F 53 20 4C 6F 61 64 65 72 20 56 35 2E 31 00 00
+0x00010040: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0x00010050: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0x00010060: 01 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0x00010070: 4E 54 4C 44 52 20 69 73 20 6D 69 73 73 69 6E 67 00
+0x00010080: 42 4F 4F 54 2E 49 4E 49 20 66 69 6C 65 20 65 72 72
+0x00010090: 6F 72 20 2D 20 73 74 61 74 75 73 20 30 78 63 30 30
+0x000100A0: 30 30 30 30 31 00 00 00 00 00 00 00 00 00 00 00 00
+0x000100B0: 4B 45 52 4E 45 4C 5F 44 41 54 41 5F 49 4E 50 41 47
+0x000100C0: 45 5F 45 52 52 4F 52 00 00 00 00 00 00 00 00 00 00
+0x000100D0: 43 4F 4E 46 49 47 5F 53 59 53 54 4E 5F 46 41 49
+0TML
+0x000100E0: 4C 55 52 45 00 00 00 00 00 00 00 00 00 00 00 00 00
+0x000100F0: 49 52 51 4C 5F 4E 4F 54 5F 4C 45 53 53 5F 4F 52 5F
+            </pre>
+            <span id="bsod-caret">_</span>
+        </div>
+    </div>
+
+    <div id="dialogue-container" class="hidden">
+        <div id="speaker-name"></div>
+        <p id="dialogue-text"></p>
+        <div id="next-arrow"></div>
+    </div>
+
+    <div id="main-content">
+        <audio id="bgm" loop><source src="bgm.mp3" type="audio/mpeg"></source></audio>
+        <a href="map.html" id="back-btn" class="icon-btn" aria-label="뒤로가기"></a>
+        <div id="bgm-btn" class="icon-btn" role="button" aria-label="BGM 재생/정지"></div>
+        <a href="index.html" id="home-btn" class="icon-btn" aria-label="홈으로"></a>
+        <canvas id="fx"></canvas>
+        <div class="captcha-wrapper">
+            <div class="captcha-container">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="robot-check" class="robot-checkbox">
+                    <label for="robot-check">I'm not a robot</label>
+                </div>
+                <div class="loading-spinner"></div>
+            </div>
+        </div>
+        <video id="bg-video" muted playsinline>
+            <source src="6/1.mp4" type="video/mp4">
+            브라우저가 동영상을 지원하지 않습니다.
+        </video>
+    </div>
+
+    <script>
+        // --- [신규] 글리치 애니메이션 루프 ID ---
+        let glitchAnimationId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- 전역 요소 변수 ---
+            const flashOverlay = document.getElementById('flash-overlay');
+            const bsodOverlay = document.getElementById('bsod-overlay');
+            const mainContent = document.getElementById('main-content');
+            const dialogueContainer = document.getElementById('dialogue-container');
+            const speakerName = document.getElementById('speaker-name');
+            const dialogueText = document.getElementById('dialogue-text');
+            const nextArrow = document.getElementById('next-arrow');
+
+            // --- BSOD 타이핑 관련 요소 ---
+            const bsodTextElement = document.getElementById('bsod-text-content');
+            const bsodCaret = document.getElementById('bsod-caret');
+            const fullBsodText = bsodTextElement.textContent; // 원본 텍스트 저장
+            bsodTextElement.textContent = ''; // 텍스트 비우기
+
+            // --- [수정] 글리치 파티클 로직 (영숫자로 변경) ---
+            const glitchCanvas = document.getElementById('glitch-canvas');
+            const glitchCtx = glitchCanvas.getContext('2d');
+            let glitchParticles = [];
+            const particleColors = ['#FFFFFF', '#FF0033', '#00FFFF']; // 흰색, 글리치 빨강, 글리치 청록
+            const numParticles = 100;
+
+            function resizeGlitchCanvas() {
+                glitchCanvas.width = glitchCanvas.clientWidth;
+                glitchCanvas.height = glitchCanvas.clientHeight;
+            }
+            resizeGlitchCanvas();
+            window.addEventListener('resize', resizeGlitchCanvas); // 화면 크기 변경 시 캔버스도 조절
+
+            // [수정] 영숫자 파티클 생성
+            function createGlitchParticle() {
+                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+                const char = chars.charAt(Math.floor(Math.random() * chars.length));
+                
+                return {
+                    x: Math.random() * glitchCanvas.width,
+                    y: Math.random() * glitchCanvas.height,
+                    char: char, // 생성할 영/숫자 문자
+                    size: Math.random() * 10 + 8, // 폰트 크기 8~18px
+                    color: particleColors[Math.floor(Math.random() * particleColors.length)],
+                    life: Math.random() * 0.5 + 0.1 // 0.1~0.6초 수명
+                };
+            }
+
+            for (let i = 0; i < numParticles; i++) {
+                glitchParticles.push(createGlitchParticle());
+            }
+
+            // [수정] 텍스트 파티클을 그리는 애니메이션 함수
+            function animateGlitchParticles() {
+                glitchCtx.clearRect(0, 0, glitchCanvas.width, glitchCanvas.height);
+
+                for (let i = glitchParticles.length - 1; i >= 0; i--) {
+                    let p = glitchParticles[i];
+                    
+                    p.life -= 0.016; // 대략 60fps 기준 수명 감소
+
+                    // 5% 확률로 무작위 위치로 점프
+                    if (Math.random() > 0.95) {
+                         p.x = Math.random() * glitchCanvas.width;
+                         p.y = Math.random() * glitchCanvas.height;
+                    }
+
+                    // 수명이 다하면 새 파티클로 교체
+                    if (p.life <= 0) {
+                        glitchParticles[i] = createGlitchParticle();
+                        continue;
+                    }
+
+                    // 파티클 그리기 (텍스트로 변경)
+                    glitchCtx.font = `${p.size}px 'SchoolSafetyGoodSupport'`; // 폰트 설정
+                    glitchCtx.fillStyle = p.color;
+                    glitchCtx.globalAlpha = p.life * 2; // 수명에 따라 투명도 조절
+                    glitchCtx.fillText(p.char, p.x, p.y); // 사각형 대신 텍스트 그리기
+                }
+                glitchCtx.globalAlpha = 1.0; // 전체 투명도 리셋
+
+                glitchAnimationId = requestAnimationFrame(animateGlitchParticles);
+            }
+            // --- 글리치 파티클 로직 끝 ---
+
+
+            // --- 대화 시스템 변수 ---
+            let currentDialogueScript = [], currentDialogueIndex = 0, isTyping = false, typingTimeout, onDialogueComplete;
+
+            // --- 대화 시스템 함수 (기존과 동일) ---
+            function typeWriter(text, i) {
+                if (i < text.length) {
+                    dialogueText.innerHTML = text.substring(0, i + 1);
+                    typingTimeout = setTimeout(() => typeWriter(text, i + 1), 50);
+                } else {
+                    isTyping = false;
+                    nextArrow.style.display = 'block';
+                }
+            }
+            function showDialogueLine() {
+                const line = currentDialogueScript[currentDialogueIndex];
+                if (!line) { endDialogue(); return; }
+                speakerName.textContent = line.name;
+                dialogueText.innerHTML = '';
+                nextArrow.style.display = 'none';
+                isTyping = true;
+                typeWriter(line.text, 0);
+            }
+            function nextDialogue() {
+                if (isTyping) {
+                    clearTimeout(typingTimeout);
+                    isTyping = false;
+                    dialogueText.innerHTML = currentDialogueScript[currentDialogueIndex].text;
+                    nextArrow.style.display = 'block';
+                    return;
+                }
+                currentDialogueIndex++;
+                if (currentDialogueIndex < currentDialogueScript.length) { showDialogueLine(); } 
+                else { endDialogue(); }
+            }
+            function startDialogue(script, onCompleteCallback) {
+                currentDialogueScript = script;
+                currentDialogueIndex = 0;
+                onDialogueComplete = onCompleteCallback;
+                dialogueContainer.classList.remove('hidden');
+                showDialogueLine();
+            }
+            function endDialogue() {
+                dialogueContainer.classList.add('hidden');
+                if (typeof onDialogueComplete === 'function') {
+                    onDialogueComplete();
+                }
+            }
+            dialogueContainer.addEventListener('click', nextDialogue);
+
+
+            // --- 화면 전환 로직 (수정됨) ---
+            function transitionToMain() {
+                // [신규] 글리치 애니메이션 중지
+                if (glitchAnimationId) {
+                    cancelAnimationFrame(glitchAnimationId);
+                    glitchAnimationId = null;
+                }
+
+                flashOverlay.style.opacity = '1';
+                setTimeout(() => { flashOverlay.style.opacity = '0'; }, 250);
+                bsodOverlay.classList.add('hidden');
+                mainContent.style.opacity = '1';
+                setTimeout(() => { bsodOverlay.style.display = 'none'; }, 1500);
+            }
+            
+            // --- BSOD 타이핑 함수 ---
+            function typewriterBSOD(text, element, callback) {
+                let i = 0;
+                const typingSpeed = 1; 
+                
+                function type() {
+                    if (i < text.length) {
+                        const chunk = text.substring(i, i + 10);
+                        element.textContent += chunk;
+                        i += 10;
+                        setTimeout(type, typingSpeed);
+                    } else {
+                        if (callback) callback();
+                    }
+                }
+                type();
+            }
+
+            // --- 인트로 시퀀스 시작 (수정됨) ---
+            const errorScript = [
+                { name: "Hellomie", text: "어... 여긴 어디지? 시스템이... 불안정해..." },
+                { name: "[System]", text: "치명적 오류 발생. 무결성 검증을 위해 보안 절차를 개시합니다." },
+                { name: "Hellomie", text: "앗, 잠깐만! 빛이...!" }
+            ];
+
+            // 1. BSOD 텍스트 타이핑 시작
+            typewriterBSOD(fullBsodText, bsodTextElement, () => {
+                bsodCaret.classList.add('hidden');
+                startDialogue(errorScript, transitionToMain);
+            });
+
+            // 2. [신규] 글리치 파티클 애니메이션 시작
+            glitchAnimationId = requestAnimationFrame(animateGlitchParticles);
+
+        });
+
+        // --- 캡차 UI 및 파티클 효과 스크립트는 기존과 동일하게 유지 ---
+        const checkbox = document.getElementById('robot-check');
+        const spinner = document.querySelector('.loading-spinner');
+        const bgVideo = document.getElementById('bg-video');
+        const canvas = document.getElementById('fx');
+
+        // --- [신규 추가 시작] ---
+        // 1. 화이트 아웃에 사용할 플래시 오버레이를 가져옵니다.
+        const flashOverlay_main = document.getElementById('flash-overlay');
+
+        // 2. 비디오 재생이 끝났을 때 실행될 이벤트 리스너를 추가합니다.
+        bgVideo.addEventListener('ended', () => {
+            
+            // 3. '화이트 아웃' 효과를 부드럽게 적용합니다.
+            flashOverlay_main.style.transition = 'opacity 0.5s ease-in';
+            flashOverlay_main.style.opacity = '1';
+
+            // 4. 화면이 하얗게 된 후 (0.6초 뒤) 7.html로 페이지를 이동시킵니다.
+            setTimeout(() => {
+                window.location.href = '7.html'; // 7.html로 이동
+            }, 600); // 0.5초(페이드 시간) + 0.1초 여유
+        });
+        // --- [신규 추가 끝] ---
+
+
+        const captchaContainer = document.querySelector('.captcha-container');
+        let isCanvasEffectActive = true;
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                isCanvasEffectActive = false;
+                canvas.classList.add('hidden');
+                document.body.style.cursor = 'default';
+                spinner.classList.add('animating');
+                spinner.classList.remove('filled');
+                setTimeout(() => {
+                    spinner.classList.remove('animating');
+                    spinner.classList.add('filled');
+                    setTimeout(() => {
+                        bgVideo.classList.add('visible');
+                        bgVideo.play();
+                    }, 1000);
+                }, 2000);
+            } else {
+                isCanvasEffectActive = true;
+                canvas.classList.remove('hidden');
+                document.body.style.cursor = 'none';
+                spinner.classList.remove('animating', 'filled');
+                bgVideo.classList.remove('visible');
+                bgVideo.pause();
+                bgVideo.currentTime = 0;
+            }
+        });
+        const cfg = { minR: 3, maxR: 15, minLife: 1.0, maxLife: 2.2, drift: 120, spacing: 5, maxSpeedEffect: 3 };
+        const ctx = canvas.getContext('2d');
+        let dpr = Math.max(1, window.devicePixelRatio || 1);
+        function resize(){ dpr = Math.max(1, window.devicePixelRatio || 1); canvas.width = Math.floor(innerWidth * dpr); canvas.height = Math.floor(innerHeight * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+        addEventListener('resize', resize);
+        resize();
+        const circles = [];
+        function rand(a, b){ return a + Math.random() * (b - a); }
+        function randi(a, b){ return Math.floor(a + Math.random() * (b - a + 1)); }
+        function spawn(x, y, speedX=0, speedY=0){ const life = rand(cfg.minLife, cfg.maxLife); const color = Math.random() > 0.5 ? '#003fff' : `hsl(${randi(200, 240)}, 100%, 70%)`; circles.push({ x, y, r: rand(cfg.minR, cfg.maxR), life, t: 0, vx: rand(-cfg.drift, cfg.drift), vy: rand(-cfg.drift, cfg.drift), speedX, speedY, color }); }
+        let px = 0, py = 0;
+        let mouseStayTimer = null;
+        let isSquareVisible = false;
+        function handleBodyMouseMove(e){
+            if (!isCanvasEffectActive) return;
+            const captchaRect = captchaContainer.getBoundingClientRect();
+            if (e.clientX >= captchaRect.left && e.clientX <= captchaRect.right && e.clientY >= captchaRect.top && e.clientY <= captchaRect.bottom) { isSquareVisible = false; return; }
+            const rect = canvas.getBoundingClientRect(); const x = e.clientX - rect.left; const y = e.clientY - rect.top; const distMoved = Math.hypot(x - px, y - py);
+            if (distMoved > 2) {
+                if (mouseStayTimer) { clearTimeout(mouseStayTimer); mouseStayTimer = null; }
+                isSquareVisible = false;
+                const dx = x - px, dy = y - py; const dist = Math.hypot(dx, dy); if(dist === 0) return;
+                const steps = Math.floor(dist / cfg.spacing);
+                for(let i=1; i<=steps; i++){ const t = i / steps; const moveX = dx / steps; const moveY = dy / steps; const speedX = Math.min(Math.abs(moveX), cfg.maxSpeedEffect); const speedY = Math.min(Math.abs(moveY), cfg.maxSpeedEffect); spawn(px + dx * t, py + dy * t, speedX, speedY); }
+                px = x; py = y;
+            } else if (!mouseStayTimer && !isSquareVisible) { mouseStayTimer = setTimeout(() => { isSquareVisible = true; }, 500); }
+        }
+        addEventListener('pointerleave', ()=>{ if (mouseStayTimer) clearTimeout(mouseStayTimer); isSquareVisible = false; });
+        let last = performance.now();
+        function tick(now){
+            if (isCanvasEffectActive) {
+                const dt = Math.min(0.05, (now - last) / 1000); ctx.clearRect(0,0,innerWidth,innerHeight);
+                for(let i = circles.length - 1; i >= 0; i--){
+                    const p = circles[i]; p.t += dt; if(p.t > p.life){ circles.splice(i,1); continue; }
+                    p.x += p.vx * dt * 0.5; p.y += p.vy * dt * 0.5;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fillStyle = p.color; ctx.fill();
+                }
+                if (isSquareVisible) { const rectSize = 100; ctx.strokeStyle = '#003fff'; ctx.lineWidth = 1; ctx.strokeRect(px - rectSize/2, py - rectSize/2, rectSize, rectSize); }
+            } else { if (circles.length > 0) { ctx.clearRect(0,0,innerWidth,innerHeight); circles.length = 0; } }
+            last = now; requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+        const bgm = document.getElementById("bgm"); const bgmBtn = document.getElementById("bgm-btn"); let isPlaying = false; bgmBtn.style.backgroundImage = "url('map/b3.png')";
+        bgmBtn.addEventListener("click", (event) => {
+            event.stopPropagation();
+            if (isPlaying) { bgm.pause(); isPlaying = false; bgmBtn.style.backgroundImage = "url('map/b3.png')"; } else {
+                const playPromise = bgm.play();
+                if (playPromise !== undefined) { playPromise.then(_ => { isPlaying = true; bgmBtn.style.backgroundImage = "url('map/b2.png')"; }).catch(error => { console.log("BGM 자동재생이 차단되었습니다."); }); }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Puzzle CAPTCHA</title>
+  <style>
+    @font-face { font-family: 'SchoolSafetyGoodSupport'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareondotumR.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+    @font-face { font-family: 'SchoolSafetyGoodSupport'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareondotumB.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'SchoolSafetyGoodSupport', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      gap: 30px;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, transparent 15%), linear-gradient(to bottom, #85FF90, #ffffff);
+      background-size: 15px 15px, 100% 100%;
+      background-repeat: repeat, no-repeat;
+      padding: 20px 0;
+    }
+    
+    #captcha-wrapper, #how-to-play-wrapper {
+      width: 800px;
+      position: relative;
+      background: linear-gradient(0deg, rgba(255, 255, 255, 0.7) 0%, rgba(220, 235, 255, 0.7) 100%);
+      border: 2px solid  #003cff;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      backdrop-filter: blur(5px);
+    }
+    #captcha-wrapper { padding: 20px; }
+
+    .captcha-content { display: flex; gap: 20px; align-items: center; }
+    #left-panel { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 200px; height: 380px; gap: 15px; }
+    #preview-container { width: 180px; height: 180px; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+    #preview-image { max-width: 100%; max-height: 100%; object-fit: contain; }
+    #right-panel { flex-grow: 1; display: flex; gap: 23px; align-items: center; }
+
+    /* [수정됨] 공통 제목 스타일 */
+    .panel-title {
+      position: absolute;
+      top: -18px;
+      left: 20px;
+      background: linear-gradient(0deg, #d4e3ff 0%, #ffffff 100%); 
+      border: 2px solid  #003cff; 
+      border-radius: 50px; 
+      padding: 8px 20px;
+      font-size: 1.2em;
+      font-weight: 700; 
+      color:  #003cff;
+      z-index: 10;
+    }
+    
+    /* 퍼즐 컨테이너 안의 제목 위치만 따로 조정 */
+    #puzzle-container .panel-title {
+        top: 10px;
+    }
+
+    #puzzle-container { position: relative; width: 380px; height: 380px; border: 2px solid #003cff; border-radius: 10px; overflow: hidden; background-color: #e0e0e0; display: flex; justify-content: center; align-items: center; }
+    #background-image { width: 100%; height: 100%; object-fit: contain; }
+    #puzzle-piece { position: absolute; cursor: grab; }
+    #controls-wrapper { display: flex; flex-direction: column; align-items: center; gap: 60px; }
+    #move-controls { display: grid; grid-template-areas: ". up ." "left . right" ". down ."; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; width: 150px; height: 150px; }
+    .move-btn { width: 45px; height: 45px; background: radial-gradient(circle at 50% 40%, #5577ff, #003cff 80%); border: 1px solid #003cff; box-shadow: inset 0 2px 2px rgba(255,255,255,0.4), inset 0 -2px 2px rgba(0,0,0,0.3), 0 4px 6px rgba(0,0,0,0.3); color: white; font-size: 1.2em; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: all 0.2s ease; border-radius: 50%; }
+    .move-btn:hover { transform: scale(1.05); filter: brightness(110%); }
+    .move-btn:active { transform: scale(0.95); filter: brightness(90%); }
+    #move-up-btn { grid-area: up; } #move-left-btn { grid-area: left; } #move-right-btn { grid-area: right; } #move-down-btn { grid-area: down; }
+   
+    #verify-btn { width: auto; padding: 10px 25px; font-size: 1.1em; background: linear-gradient(to bottom, #5577ff, #003cff); color: white; border: 1px solid #003cff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3); text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.2); border-radius: 10px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; font-family: 'SchoolSafetyGoodSupport', sans-serif; }
+    #verify-btn:hover { filter: brightness(110%); box-shadow: 0 6px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3); transform: translateY(-1px); }
+
+    #how-to-play-wrapper { padding: 35px; padding-top: 30px; }
+    #how-to-play-text { color: #003cff; font-size: 1.1em; margin: 0; padding-right: 30px; line-height: 1.7; margin-top: 10px; }
+    
+    .icon-btn { position: absolute; cursor: pointer; width: 4.3vw; height: 4.3vw; z-index: 100; background-repeat: no-repeat; background-size: contain; background-position: center; transition: transform 0.2s ease, background-image 0.2s ease; }
+    .icon-btn:hover { transform: scale(1.1); }
+    #back-btn { top: 4%; left: 3%; background-image: url('map/b.png'); }
+    #back-btn:hover { background-image: url('map/-b.png'); }
+    #bgm-btn { top: 4%; left: 8%; background-image: url('map/b2.png'); }
+    #home-btn { top: 4%; right: 3%; background-image: url('map/b4.png'); }
+    #home-btn:hover { background-image: url('map/-b4.png'); }
+    
+    /* --- [추가됨] 대화창 관련 CSS --- */
+    #dialogue-container { 
+        position: fixed; 
+        bottom: 7vh; 
+        left: 50%; 
+        transform: translateX(-50%); 
+        width: 80%; 
+        max-width: 900px; 
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0.85), rgba(240, 245, 255, 1)); 
+        border: 2px solid #003fff;
+        border-radius: 10px; 
+        padding: 20px; 
+        padding-bottom: 100px; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
+        cursor: pointer; 
+        z-index: 1000; 
+        transition: opacity 0.5s ease;
+        opacity: 1;
+    }
+    #dialogue-container.hidden { opacity: 0; pointer-events: none; }
+    #speaker-name { 
+        position: absolute; 
+        top: -60px; 
+        left: 0px; 
+        background: linear-gradient(to bottom, #a0b7ff, #003fff);
+        color: white; 
+        padding: 10px 20px; 
+        border-radius: 8px; 
+        font-weight: bold; 
+        font-size: 1.5em; 
+        border: 2px solid  #003fff; 
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2); 
+    }
+    #dialogue-text { 
+        margin: 0; 
+        font-size: 1.5em; 
+        color: #003fff;
+        line-height: 1.5; 
+        min-height: 45px;
+    }
+    #next-arrow { 
+        position: absolute; 
+        bottom: 15px; 
+        right: 20px; 
+        width: 0; 
+        height: 0; 
+        border-radius: 0px; 
+        border-top: 20px solid transparent; 
+        border-bottom: 20px solid transparent; 
+        border-left: 30px solid #003fff;
+        animation: bounce-horizontal 1s infinite; 
+        display: none; 
+    }
+    @keyframes bounce-horizontal { 
+        0%, 100% { transform: translateX(0); } 
+        50% { transform: translateX(5px); } 
+    }
+
+      #hellomie-background-gif {
+        position: fixed; /* 화면에 고정 */
+        left: 50%;
+        bottom: -20vw;
+        transform: translateX(-50%);
+        height: 118vh;
+        z-index: 1;
+        opacity: 0; /* 처음엔 투명하게 */
+        transition: opacity 1s ease; /* 부드럽게 나타나는 효과 */
+        pointer-events: none; /* GIF가 다른 버튼 클릭을 방해하지 않도록 함 */
+        filter: drop-shadow(0 0 10px #00aaff) drop-shadow(0 0 5px #00aaff); 
+    }
+    #hellomie-background-gif img {
+        height: 100%;
+        width: auto;
+    }
+  </style>
+</head>
+<body>
+  <audio id="bgm" loop><source src="bgm.mp3" type="audio/mpeg"></source></audio>
+  
+  <a href="map.html" id="back-btn" class="icon-btn" aria-label="뒤로가기"></a>
+  <div id="bgm-btn" class="icon-btn" role="button" aria-label="BGM 재생/정지"></div>
+  <a href="index.html" id="home-btn" class="icon-btn" aria-label="홈으로"></a>
+  
+  <div id="dialogue-container">
+    <div id="speaker-name"></div>
+    <p id="dialogue-text"></p>
+    <div id="next-arrow"></div>
+  </div>
+
+  <div id="hellomie-background-gif">
+    <img src="talk.gif" alt="Hellomie Character GIF" >
+  </div>
+
+  <div id="captcha-wrapper" style="display: none;">
+    <div id="progress-indicator"></div>
+    <div class="captcha-content">
+      <div id="left-panel">
+        <div id="puzzle-title" class="panel-title"></div>
+        <div id="preview-container"> <img id="preview-image" src="" alt="Preview"> </div>
+      </div>
+      <div id="right-panel">
+        <div id="puzzle-container">
+          <img id="background-image" src="" alt="Puzzle Background">
+          <img id="puzzle-piece" src="" alt="Puzzle Piece">
+        </div>
+        <div id="controls-wrapper">
+          <div id="move-controls">
+            <button id="move-up-btn" class="move-btn">▲</button>
+            <button id="move-left-btn" class="move-btn">◄</button>
+            <button id="move-right-btn" class="move-btn">►</button>
+            <button id="move-down-btn" class="move-btn">▼</button>
+          </div>
+          <button id="verify-btn">Verify</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="how-to-play-wrapper" style="display: none;">
+    <div class="panel-title">How to Play</div>
+    <p id="how-to-play-text">오른쪽 조이스틱을 움직여 퍼즐 조각을 배경 그림의 올바른 위치에 맞춘 후, <br>'Verify' 버튼을 누르세요.</p>
+  </div>
+
+  <script>
+      const userNickname = localStorage.getItem('playerNickname') || 'human';
+
+
+    const MOVE_STEP = 0.04;
+    const puzzleStages = [
+      {
+        problems: [
+          { name: "Steel tower", preview: "3/o3.png", piece: "3/o2.png", background: "3/o1.png", correctPercentageX: 0.9, correctPercentageY: 0.66, pieceSizeRatio: 0.7 },
+          { name: "House", preview: "3/h3.png", piece: "3/h2.png", background: "3/h1.png", correctPercentageX: 0.54, correctPercentageY: 0.46, pieceSizeRatio: 0.44 },
+          { name: "Stair", preview: "3/p3.png", piece: "3/p2.png", background: "3/p1.png", correctPercentageX: 1, correctPercentageY: 0.42, pieceSizeRatio: 0.45 }
+        ]
+      },
+      {
+        problems: [
+          { name: "Tile", preview: "3/b3.png", piece: "3/b2.png", background: "3/b1.gif", correctPercentageX: 0.28, correctPercentageY: 0.34, pieceSizeRatio: 0.55 },
+        ]
+      }
+    ];
+    
+    const FAIL_THRESHOLD = 3;
+    let failedAttempts = 0;
+
+    let currentStageIndex = 0;
+    let currentPuzzle;
+    let currentPiecePercentX = 0.5;
+    let currentPiecePercentY = 0.5;
+
+    const puzzleContainer = document.getElementById('puzzle-container');
+    const previewImage = document.getElementById('preview-image');
+    const puzzleTitle = document.getElementById('puzzle-title');
+    const backgroundImage = document.getElementById('background-image');
+    const puzzlePiece = document.getElementById('puzzle-piece');
+    const verifyBtn = document.getElementById('verify-btn');
+    const moveUpBtn = document.getElementById('move-up-btn');
+    const moveDownBtn = document.getElementById('move-down-btn');
+    const moveLeftBtn = document.getElementById('move-left-btn');
+    const moveRightBtn = document.getElementById('move-right-btn');
+    const progressIndicator = document.getElementById('progress-indicator');
+    const captchaWrapper = document.getElementById('captcha-wrapper');
+    const howToPlayWrapper = document.getElementById('how-to-play-wrapper');
+    
+    const dialogueContainer = document.getElementById('dialogue-container');
+    const speakerName = document.getElementById('speaker-name');
+    const dialogueText = document.getElementById('dialogue-text');
+    const nextArrow = document.getElementById('next-arrow');
+    const hellomieGif = document.getElementById('hellomie-background-gif');
+
+    let currentDialogueScript = [];
+    let currentDialogueIndex = 0;
+    let isTyping = false;
+    let typingTimeout;
+    
+
+     const introDialogue = [
+      // '인간'을 userNickname 변수로 바꾸고, 템플릿 리터럴(``)을 사용합니다.
+      { name: "Hellomie", text: `이미지 문제가 많이 어려웠나봐... 그래도 Stage 3까지 온 걸 환영해!!` },
+      { name: "Hellomie", text: `이번 문제에서 ${userNickname}은(는) 제시되는 이미지 퍼즐을 사진 속 알맞은 위치에 맞추면 돼.` },
+      { name: "Hellomie", text: "화이팅!" },
+    ];
+
+    function typeWriter(text, i) {
+      if (i < text.length) {
+        dialogueText.innerHTML = text.substring(0, i + 1);
+        typingTimeout = setTimeout(() => typeWriter(text, i + 1), 50);
+      } else {
+        isTyping = false;
+        nextArrow.style.display = 'block';
+      }
+    }
+    
+    function showDialogueLine() {
+      const line = currentDialogueScript[currentDialogueIndex];
+      if (!line) {
+        endDialogue();
+        return;
+      }
+      speakerName.textContent = line.name;
+      dialogueText.innerHTML = '';
+      nextArrow.style.display = 'none';
+      isTyping = true;
+      typeWriter(line.text, 0);
+    }
+
+    function nextDialogue() {
+      if (isTyping) {
+        clearTimeout(typingTimeout);
+        isTyping = false;
+        dialogueText.innerHTML = currentDialogueScript[currentDialogueIndex].text;
+        nextArrow.style.display = 'block';
+        return;
+      }
+      currentDialogueIndex++;
+      if (currentDialogueIndex < currentDialogueScript.length) {
+          showDialogueLine();
+      } else {
+          endDialogue();
+      }
+    }
+    
+    function startDialogue(script) {
+        currentDialogueScript = script;
+        currentDialogueIndex = 0;
+        dialogueContainer.classList.remove('hidden');
+        hellomieGif.style.opacity = '1';
+        nextArrow.style.display = 'none';
+        showDialogueLine();
+    }
+    
+    function endDialogue() {
+      dialogueContainer.classList.add('hidden');
+      hellomieGif.style.opacity = '0';
+      
+      setTimeout(() => {
+        captchaWrapper.style.display = 'flex';
+        howToPlayWrapper.style.display = 'flex';
+        loadStage(currentStageIndex);
+      }, 1000);
+    }
+    
+    document.addEventListener("DOMContentLoaded", () => {
+
+      const bgm = document.getElementById("bgm"); const bgmBtn = document.getElementById("bgm-btn"); let isPlaying = false; bgmBtn.style.backgroundImage = "url('map/b3.png')";
+    bgmBtn.addEventListener("click", (event) => { event.stopPropagation(); if (isPlaying) { bgm.pause(); isPlaying = false; bgmBtn.style.backgroundImage = "url('map/b3.png')"; } else { const playPromise = bgm.play(); if (playPromise !== undefined) { playPromise.then(_ => { isPlaying = true; bgmBtn.style.backgroundImage = "url('map/b2.png')"; }).catch(error => { console.log("BGM 자동재생 차단됨"); }); } } });
+    bgmBtn.addEventListener('mouseover', () => { if (isPlaying) { bgmBtn.style.backgroundImage = "url('map/-b2.png')"; } else { bgmBtn.style.backgroundImage = "url('map/-b3.png')"; } bgmBtn.style.transform = 'scale(1.1)'; });
+    bgmBtn.addEventListener('mouseout', () => { if (isPlaying) { bgmBtn.style.backgroundImage = "url('map/b2.png')"; } else { bgmBtn.style.backgroundImage = "url('map/b3.png')"; } bgmBtn.style.transform = 'scale(1)'; });
+
+    
+      const bgmPromise = bgm.play();
+      if (bgmPromise !== undefined) {
+        bgmPromise.then(_ => {
+          isPlaying = true;
+          bgmBtn.style.backgroundImage = "url('map/b2.png')";
+          startDialogue(introDialogue);
+        }).catch(error => {
+          console.log("BGM 자동재생 차단됨. 사용자 클릭 필요");
+          startDialogue(introDialogue);
+        });
+      } else {
+         startDialogue(introDialogue);
+      }
+    });
+    
+    dialogueContainer.addEventListener('click', nextDialogue);
+
+    function updateProgressIndicator() {
+      progressIndicator.innerHTML = '';
+      for (let i = 0; i < puzzleStages.length; i++) {
+        const dot = document.createElement('span');
+        dot.classList.add('progress-dot');
+        if (i < currentStageIndex) {
+          dot.classList.add('solved');
+        }
+        progressIndicator.appendChild(dot);
+      }
+    }
+    
+    function loadStage(stageIndex) {
+      failedAttempts = 0;
+      const stage = puzzleStages[stageIndex];
+      const problemPool = stage.problems;
+      currentPuzzle = problemPool[Math.floor(Math.random() * problemPool.length)];
+      loadPuzzle(currentPuzzle);
+      updateProgressIndicator();
+    }
+    
+    function loadPuzzle(puzzle) {
+      currentPiecePercentX = 0.5;
+      currentPiecePercentY = 1.0;
+      previewImage.src = puzzle.preview;
+      puzzleTitle.textContent = puzzle.name;
+      puzzlePiece.src = puzzle.piece;
+      backgroundImage.src = puzzle.background;
+      backgroundImage.onload = () => {
+        const puzzleAreaHeight = puzzleContainer.clientHeight;
+        const pieceHeight = puzzleAreaHeight * puzzle.pieceSizeRatio;
+        puzzlePiece.style.height = `${pieceHeight}px`;
+        puzzlePiece.style.width = 'auto';
+        updatePiecePosition();
+      };
+    }
+    
+    function updatePiecePosition() {
+      currentPiecePercentX = Math.max(0, Math.min(1, currentPiecePercentX));
+      currentPiecePercentY = Math.max(0, Math.min(1, currentPiecePercentY));
+      const puzzleAreaWidth = puzzleContainer.clientWidth;
+      const puzzleAreaHeight = puzzleContainer.clientHeight;
+      const pieceWidth = puzzlePiece.offsetWidth;
+      const pieceHeight = puzzlePiece.offsetHeight;
+      const maxMoveX = puzzleAreaWidth - pieceWidth;
+      const maxMoveY = puzzleAreaHeight - pieceHeight;
+      puzzlePiece.style.left = `${currentPiecePercentX * maxMoveX}px`;
+      puzzlePiece.style.top = `${currentPiecePercentY * maxMoveY}px`;
+    }
+    
+    verifyBtn.addEventListener('click', () => {
+  const correctX = currentPuzzle.correctPercentageX;
+  const correctY = currentPuzzle.correctPercentageY;
+  const isCorrect = Math.abs(currentPiecePercentX - correctX) <= 0.05 && Math.abs(currentPiecePercentY - correctY) <= 0.05;
+
+  if (currentStageIndex === puzzleStages.length - 1) {
+    if (isCorrect) {
+      // ▼▼▼▼▼ 1. 성공 메시지를 괄호 안에 넣어 한 줄로 합쳤습니다. ▼▼▼▼▼
+      clearStage3("[Easter Egg]축하합니다! 성공적으로 맞추셨어요! 다음 Stage로 이동합니다.");
+      // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    } else {
+      failedAttempts++;
+      alert(`[ERR_303] Inc0rrect → Pl3@se try ag@in! (${failedAttempts}/${FAIL_THRESHOLD})`);
+      if (failedAttempts >= FAIL_THRESHOLD) {
+        
+        // ▼▼▼▼▼ 2. 실패 메시지를 괄호 안에 넣어 한 줄로 합쳤습니다. ▼▼▼▼▼
+        clearStage3("[ERR_303] sy$tem br◎ke → 다r른 問제로 movξ");
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        
+      }
+    }
+    return;
+  }
+  
+  if (isCorrect) {
+    alert("성공!");
+    currentStageIndex++;
+    loadStage(currentStageIndex);
+  } else {
+    alert(`[ERR_303] Inc0rrect → Pl3@se try ag@in!\n\n현재 위치:\nX ≈ ${Math.round(currentPiecePercentX * 100)}%\nY ≈ ${Math.round(currentPiecePercentY * 100)}%`);
+  }
+});
+
+     function clearStage3(message) { // (message) 매개변수 추가
+      alert(message); // 전달받은 message를 alert으로 표시
+      localStorage.setItem('clearedStage', '3');
+      window.location.href = 'map.html';
+    }
+
+    moveUpBtn.addEventListener('click', () => { currentPiecePercentY -= MOVE_STEP; updatePiecePosition(); });
+    moveDownBtn.addEventListener('click', () => { currentPiecePercentY += MOVE_STEP; updatePiecePosition(); });
+    moveLeftBtn.addEventListener('click', () => { currentPiecePercentX -= MOVE_STEP; updatePiecePosition(); });
+    moveRightBtn.addEventListener('click', () => { currentPiecePercentX += MOVE_STEP; updatePiecePosition(); });
+    previewImage.addEventListener('click', () => { loadStage(currentStageIndex); });
+
+    
+  </script>
+</body>
+</html>

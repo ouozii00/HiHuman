@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hi Human</title>
+  <style>
+    @font-face {
+      font-family: 'SchoolSafetyGoodSupport';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareondotumR.woff2') format('woff2');
+      font-weight: 400; font-display: swap;
+    }
+    @font-face {
+      font-family: 'SchoolSafetyGoodSupport';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareondotumB.woff2') format('woff2');
+      font-weight: 700; font-display: swap;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'SchoolSafetyGoodSupport', sans-serif;
+    }
+
+    .page-background {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: -2;
+      --gradient-start: #ffffff; --gradient-end: #003cff;   
+      --dot-color: rgba(0, 0, 0, 0.1); --dot-size: 2px; --dot-spacing: 8px;  
+      background-image:
+        radial-gradient(circle, var(--dot-color) var(--dot-size), transparent 0),
+        linear-gradient(to top, var(--gradient-end), var(--gradient-start));
+      background-size: var(--dot-spacing) var(--dot-spacing), cover;
+      background-attachment: fixed;
+    }
+
+    #screen {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: -1;
+    }
+
+    .modal-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    .modal-common {
+      position: absolute;
+      bottom: 15vh;
+      right: 15vw;
+      overflow: visible;
+      z-index: 10;
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 1));
+      border-radius: 12px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      display: flex; flex-direction: column;
+      border: 2px solid #003CFF;
+      width: 90%;
+      max-width: 53vw; 
+    }
+
+    .modal-content {
+      padding: 30px 20px; 
+      min-height: 150px; 
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      
+      gap: 20px;
+    }
+    
+    .hidden { opacity: 0 !important; transform: scale(0.9) !important; pointer-events: none !important; }
+
+    .modal-header {
+      background: linear-gradient(to bottom, #5577ff, #003cff); color: white; padding: 16px 0;
+      font-size: 1.5em; font-weight: 700;   border-top-left-radius: 10px; 
+      border-top-right-radius: 10px;
+    }
+
+    .icon-btn {
+      position: absolute;
+      cursor: pointer;
+      width: 4.3vw;
+      height: 4.3vw;
+      z-index: 100;
+      background-repeat: no-repeat;
+      background-size: contain;
+      background-position: center;
+      transition: transform 0.2s ease, background-image 0.2s ease;
+    }
+
+    .icon-btn:hover {
+      transform: scale(1.1);
+    }
+
+    #back-btn {
+      top: 4%;
+      left: 3%;
+      background-image: url('map/b.png');
+    }
+
+    #back-btn:hover {
+      background-image: url('map/-b.png');
+    }
+
+    #home-btn {
+      top: 4%;
+      right: 3%;
+      background-image: url('map/b4.png');
+    }
+
+    #home-btn:hover {
+      background-image: url('map/-b4.png');
+    }
+
+    #character-left {
+        position: absolute;
+        bottom: -48vw;
+        left: -19vw;
+        width: 70vw;
+        height: auto;
+        z-index: 5;
+    }
+
+    #character-top-right {
+        position: absolute;
+        top: -8vw;
+        right: -3vw;
+        width: 22vw;
+        z-index: 15;
+    }
+
+    .menu-buttons button {
+        font-family: 'SchoolSafetyGoodSupport', sans-serif;
+        font-size: 1.4vw; font-weight: 700;
+        color: #003CFF;
+        border-radius: 100px;
+        border: 2px solid #003CFF;
+        background: linear-gradient(180deg, #FFF -22.79%, #9DB4FF 138.97%);
+        padding: 10px 30px; margin-bottom: 17px;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        margin-top: 0px;
+        align-self: flex-end;
+    }
+
+    .menu-buttons button:hover {
+        border: 2px solid #FFF;
+        background: linear-gradient(180deg, #B2C9FF -22.79%, #003BFE 138.97%); color: white;
+        transform: scale(1.1); z-index: 15;
+
+    }
+
+    .menu-buttons {
+        position: relative;
+        width: 100%;
+        display: flex;
+        justify-content: center; /* 이 부분을 center로 변경하여 버튼을 중앙 정렬합니다 */
+        padding-right: 0; /* 중앙 정렬을 위해 오른쪽 패딩을 제거합니다 */
+    }
+  </style>
+</head>
+<body>
+  <audio id="bgm" loop><source src="bgm.mp3" type="audio/mpeg"></audio>
+
+  <div class="page-background"></div>
+  <canvas id="screen"></canvas>
+
+  <img src="howtoplay/hello1.png" id="character-left" alt="헬로미 캐릭터">
+
+  <div class="modal-common hidden" id="infoModal">
+    <img src="howtoplay/well1.png" id="character-top-right" alt="마스코트 캐릭터">
+    <div class="modal-header" style="text-align: center;">How to Play</div>
+    <div class="modal-content">
+      <p style="color: #043fff; font-size: 1.2em; line-height: 1.8; text-align: center;">
+        CAPTCHA는 인간과 컴퓨터(봇)을 구분하는 
+        자동화 테스트 시스템입니다. <br><br>
+
+        전체 시스템 난이도를 조정해야하는 서버 세계의 관리자 헬로미에게 도움이 필요해요!<br>
+
+        관리자 헬로미의 안내에 따라서 총 5개의 스테이지에 참여하여 <br>CAPTCHA 시스템이 적절히 인간을 구별해 낼수 있는 난이도인지 점검해주세요!</p>
+    
+    <div class="menu-buttons">
+      <button id="game-start-btn">Game Start</button>
+    </div>
+
+    </div>
+  </div>
+
+  <a href="index.html#main-menu-screen" id="back-btn" class="icon-btn" aria-label="뒤로가기"></a>
+  <a href="index.html" id="home-btn" class="icon-btn" aria-label="홈으로"></a>
+
+
+  <script>
+    const canvas = document.getElementById("screen"); const ctx = canvas.getContext("2d"); let w, h; function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; } window.addEventListener("resize", resize); resize(); class Circle { constructor() {this.reset();} reset() { this.x = Math.random() * w; this.y = Math.random() * h; this.r = Math.random() * 10 + 5; this.dx = (Math.random() - 0.5) * 1.5; this.dy = (Math.random() - 0.5) * 1.5; this.color = `hsl(${Math.random() * 360}, 100%, 60%)`; } draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2); ctx.fillStyle = this.color; ctx.fill(); } update() { this.x += this.dx; this.y += this.dy; if(this.x < this.r || this.x > w - this.r) this.dx *= -1; if(this.y < this.r || this.y > h - this.r) this.dy *= -1; this.draw(); } } let circles = []; for(let i = 0; i < 50; i++) { circles.push(new Circle()); } function animate() { ctx.clearRect(0, 0, w, h); circles.forEach(c => c.update()); requestAnimationFrame(animate); } animate();
+    
+    const infoModal = document.getElementById('infoModal');
+    document.addEventListener('DOMContentLoaded', () => {
+        infoModal.classList.remove('hidden');
+    });
+
+    const gameStartBtn = document.getElementById('game-start-btn');
+    if (gameStartBtn) {
+        gameStartBtn.addEventListener('click', () => {
+            sessionStorage.setItem('isNewStart', 'true');
+            window.location.href = 'login.html';
+        });
+    }
+  </script>
+</body>
+</html>

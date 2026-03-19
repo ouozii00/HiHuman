@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Stage 2 - Final Version</title>
+
+<style>
+
+@font-face { font-family: 'SchoolSafetyGoodSupport'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareondotumR.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+
+@font-face { font-family: 'SchoolSafetyGoodSupport'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2307-2@1.0/HakgyoansimBareondotumB.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+
+body { margin: 0; height: 100vh; font-family: 'SchoolSafetyGoodSupport', sans-serif; overflow: hidden; position: relative; display: flex; justify-content: center; align-items: center; background: radial-gradient(circle, rgba(255,255,255,0.25) 0%, transparent 15%), linear-gradient(to bottom, #0062ff, #ffffff); background-size: 15px 15px, 100% 100%; background-repeat: repeat, no-repeat;}
+
+/* --- 버튼 공통 스타일 --- */
+.icon-btn {
+  position: absolute;
+  cursor: pointer;
+  width: 4.3vw;
+  height: 4.3vw;
+  z-index: 100;
+  
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+
+  transition: transform 0.2s ease, background-image 0.2s ease;
+}
+
+.icon-btn:hover {
+  transform: scale(1.1);
+}
+
+
+/* --- 각 버튼별 위치 및 이미지 지정 --- */
+
+/* 1. 뒤로가기 버튼 */
+#back-btn {
+  top: 4%;
+  left: 3%;
+  background-image: url('map/b.png');
+}
+#back-btn:hover {
+  background-image: url('map/-b.png');
+}
+
+/* 2. BGM 토글 버튼 */
+#bgm-btn {
+  top: 4%;
+  left: 8%;
+  background-image: url('map/b2.png');
+}
+/* BGM 버튼의 호버 효과는 아래 JavaScript로 제어됩니다. */
+
+
+/* 3. 홈 버튼 */
+#home-btn {
+  top: 4%;
+  right: 3%;
+  background-image: url('map/b4.png');
+}
+#home-btn:hover {
+  background-image: url('map/-b4.png');
+}
+
+#background-blur {
+
+position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+
+background-image: url('2/bg_stage2.jpg');
+
+background-position: center center; background-size: cover; background-repeat: no-repeat;
+
+filter: blur(5px); transform: scale(1.1);
+
+z-index: 1; opacity: 0; transition: opacity 0.5s ease-in-out;}
+
+
+
+#background-logo {
+
+position: absolute; bottom: 40px; left: 50%;
+
+transform: translateX(-50%); width: 700px; height: auto;
+
+z-index: 2; opacity: 0; transition: opacity 0.5s ease-in-out;}
+
+
+
+.character { position: absolute; bottom: 0; filter: drop-shadow(0 0 10px #00aaff) drop-shadow(0 0 5px #00aaff); transition: opacity 0.5s ease; }
+    #char1 { left: 50%; bottom: -20vw; transform: translateX(-50%); height: 118vh; z-index: 1; }
+
+#char1 { left: 50%; transform: translateX(-50%); height: 118vh; }
+
+#dialogue-container { position: fixed; bottom: 7vh; left: 50%; transform: translateX(-50%); width: 80%; max-width: 900px; 
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 0.85), rgba(240, 245, 255, 1)); 
+      border: 2px solid #003cff; border-radius: 10px; padding: 20px; padding-bottom: 100px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 10; transition: opacity 0.5s ease; }
+
+#speaker-name { position: absolute; top: -60px; left: 0px; background: linear-gradient(to bottom, #5577ff, #003cff); color: white; padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 1.5em; border: 1px solid #003cff; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+#dialogue-text { margin: 0; font-size: 1.5em; color: #003cff; line-height: 1.5; }
+
+#next-arrow { position: absolute; bottom: 15px; right: 20px; width: 0; height: 0; border-radius: 0px; border-top: 20px solid transparent; border-bottom: 20px solid transparent; border-left: 30px solid #003cff; animation: bounce 1s infinite; display: none; }
+
+@keyframes bounce { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+
+#image-captcha-container { background:linear-gradient(to bottom,rgba(255, 255, 255, 0),rgba(255, 255, 255, 0.693),rgba(255, 255, 255, 0.84)); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 16px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); width: 420px; z-index: 20; padding: 15px; display: none; position: relative; transform: translateY(-50px);}
+
+#captcha-header { background: linear-gradient(to bottom, #5577ff, #003cff);border: 1px solid #003cff;color: white; padding: 20px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); border-radius: 10px; }
+
+#captcha-header p { margin: 0; font-size: 1.1em; opacity: 0.9; }
+
+#captcha-header h2 { margin: 4px 0 0; font-size: 2.2em; }
+
+#image-grid { display: grid; gap: 10px; margin-top: 15px; }
+
+.grid-2x2 { grid-template-columns: 1fr 1fr; } .grid-3x3 { grid-template-columns: 1fr 1fr 1fr; } .grid-4x4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+.grid-item { position: relative; cursor: pointer; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); aspect-ratio: 1 / 1; background-repeat: no-repeat; transition: box-shadow 0.2s ease; border: 1px solid #003cff;}
+
+.grid-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.grid-item.selected { box-shadow: 0 0 10px 3px #007bff;}
+
+#captcha-footer { margin-top: 15px; text-align: right; }
+
+#verify-btn { width: auto; padding: 10px 25px; font-size: 1.1em; background: linear-gradient(to bottom, #5577ff, #003cff); color: white; border: 1px solid #003cff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3); text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.2); border-radius: 10px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; font-family: 'SchoolSafetyGoodSupport', sans-serif; }
+
+#verify-btn:hover { filter: brightness(110%); box-shadow: 0 6px 8px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.3); transform: translateY(-1px); }
+
+
+</style>
+
+</head>
+
+<body>
+
+  <audio id="bgm" loop>
+    <source src="bgm.mp3" type="audio/mpeg">
+  </audio>
+  
+  <a href="map.html" id="back-btn" class="icon-btn" aria-label="뒤로가기"></a>
+  
+  <div id="bgm-btn" class="icon-btn" role="button" aria-label="BGM 재생/정지"></div>
+  
+  <a href="index.html" id="home-btn" class="icon-btn" aria-label="홈으로"></a>
+
+<div id="background-blur"></div>
+
+<img id="background-logo" src="2/Hi_human_logo.png" alt="Hi human logo">
+
+
+
+<img id="char1" class="character" src="talk.gif" alt="주인공 캐릭터">
+
+<div id="dialogue-container">
+
+<div id="speaker-name">Hellomie</div>
+
+<p id="dialogue-text"></p>
+
+<div id="next-arrow"></div>
+
+</div>
+
+
+
+<div id="image-captcha-container">
+
+<div id="captcha-header">
+
+<p>Select all images with a</p>
+
+<h2 id="captcha-target-word">Horse</h2>
+
+</div>
+
+<div id="image-grid"></div>
+
+<div id="captcha-footer">
+
+<button id="verify-btn">Verify</button>
+
+</div>
+
+</div>
+
+<script>
+  const userNickname = localStorage.getItem('playerNickname') || 'human';
+  const captchaProblems = [
+    { type: 'individual', targetWord: 'Horse', backgroundImage: 'bg_horse.jpg', images: ['horse1.png', 'horse2.png', 'horse3.png', 'nothorse.png'], correctAnswers: ['horse1.png', 'horse2.png', 'horse3.png'] },
+    { type: 'sprite', targetWord: 'Car', backgroundImage: 'bg_3.jpg', spriteImage: '3.png', gridSize: 3, correctAnswers: [4, 6, 7, 9] },
+    { type: 'sprite', targetWord: 'Beige car', backgroundImage: 'bg_4.jpg', spriteImage: '4.png', gridSize: 4, correctAnswers: [5, 6, 9, 10, 11, 13, 14, 16] }
+  ];
+  const dialogues = [`보안 문자 문제, 약간 어려웠나...?`, 
+                      "그래도 이번에는 로봇이 많이 어려워 하는 이미지 문제라 많이 어렵지 않을거야.", 
+                      " 제시된 단어와 일치하는 이미지를 모두 선택하면 돼!"];
+  
+  // 실패 카운트 변수들을 다시 사용합니다.
+  const FAIL_THRESHOLD = 3;
+  let failedAttempts = 0;
+  let currentDialogueIndex = 0, isTyping = false, currentProblemIndex = 0;
+
+  const backgroundBlur = document.getElementById('background-blur');
+  const backgroundLogo = document.getElementById('background-logo');
+  const char1 = document.getElementById('char1');
+  const dialogueContainer = document.getElementById('dialogue-container');
+  const dialogueTextElement = document.getElementById('dialogue-text');
+  const nextArrow = document.getElementById('next-arrow');
+  const imageCaptchaContainer = document.getElementById('image-captcha-container');
+  const targetWordElement = document.getElementById('captcha-target-word');
+  const imageGrid = document.getElementById('image-grid');
+  const verifyBtn = document.getElementById('verify-btn');
+
+  function startCaptchaChallenge() {
+    const firstProblem = captchaProblems[0];
+    backgroundBlur.style.backgroundImage = `url(2/${firstProblem.backgroundImage})`;
+    backgroundBlur.style.opacity = '1';
+    backgroundLogo.style.opacity = '1';
+    dialogueContainer.style.opacity = '0';
+    char1.style.opacity = '0';
+    setTimeout(() => {
+      dialogueContainer.style.display = 'none';
+      char1.style.display = 'none';
+      imageCaptchaContainer.style.display = 'block';
+      loadProblem(currentProblemIndex);
+    }, 500);
+  }
+
+  function loadProblem(index) {
+    const problem = captchaProblems[index];
+    backgroundBlur.style.backgroundImage = `url(2/${problem.backgroundImage})`;
+    targetWordElement.textContent = problem.targetWord;
+    imageGrid.innerHTML = '';
+    imageGrid.className = 'image-grid';
+    if (problem.type === 'sprite') {
+      loadSpriteProblem(problem);
+    } else {
+      loadIndividualProblem(problem);
+    }
+  }
+
+  function loadIndividualProblem(problem) {
+    imageGrid.classList.add('grid-2x2');
+    problem.images.forEach(imageSrc => {
+      const item = document.createElement('div');
+      item.className = 'grid-item';
+      item.dataset.src = imageSrc;
+      const img = document.createElement('img');
+      img.src = '2/' + imageSrc;
+      item.appendChild(img);
+      imageGrid.appendChild(item);
+      item.addEventListener('click', () => { item.classList.toggle('selected'); });
+    });
+  }
+
+  function loadSpriteProblem(problem) {
+    const gridSize = problem.gridSize;
+    imageGrid.classList.add(`grid-${gridSize}x${gridSize}`);
+    const totalPieces = gridSize * gridSize;
+    for (let i = 0; i < totalPieces; i++) {
+      const item = document.createElement('div');
+      item.className = 'grid-item';
+      item.dataset.id = i + 1;
+      const col = i % gridSize;
+      const row = Math.floor(i / gridSize);
+      item.style.backgroundImage = `url(2/${problem.spriteImage})`;
+      item.style.backgroundSize = `${gridSize * 100}% ${gridSize * 100}%`;
+      const xPos = (gridSize > 1) ? (col / (gridSize - 1)) * 100 : 0;
+      const yPos = (gridSize > 1) ? (row / (gridSize - 1)) * 100 : 0;
+      item.style.backgroundPosition = `${xPos}% ${yPos}%`;
+      imageGrid.appendChild(item);
+      item.addEventListener('click', () => { item.classList.toggle('selected'); });
+    }
+  }
+
+  // --- [수정됨] 정답 확인 버튼 이벤트를 '이스터에그' 방식으로 변경 ---
+    verifyBtn.addEventListener('click', () => {
+    const problem = captchaProblems[currentProblemIndex];
+    const selectedItems = Array.from(document.querySelectorAll('.grid-item.selected'));
+    let isCorrect = false;
+
+    // 먼저 정답이 맞는지 아닌지 계산
+    if (problem.type === 'sprite') {
+      const selectedAnswers = selectedItems.map(item => parseInt(item.dataset.id));
+      const correctAnswers = problem.correctAnswers;
+      isCorrect = selectedAnswers.length === correctAnswers.length && selectedAnswers.every(answer => correctAnswers.includes(answer));
+    } else {
+      const selectedAnswers = selectedItems.map(item => item.dataset.src);
+      const correctAnswers = problem.correctAnswers;
+      isCorrect = selectedAnswers.length === correctAnswers.length && selectedAnswers.every(answer => correctAnswers.includes(answer));
+    }
+
+    // [수정] 정답/오답에 따른 로직을 통합하여 관리합니다.
+    if (isCorrect) {
+      // 정답을 맞혔을 경우
+      if (currentProblemIndex === captchaProblems.length - 1) {
+        // 마지막 문제를 맞혔다면 이스터에그!
+        alert("[Easter Egg]축하합니다! 맞추기 어려운 단계도 성공적으로 맞추셨어요! 다음 Stage로 이동합니다.");
+        clearStage2();
+      } else {
+        // 다음 문제로 이동
+        currentProblemIndex++;
+        loadProblem(currentProblemIndex);
+      }
+    } else {
+      // 오답일 경우
+      alert("Inc0rrect. Pl3ase try again.");
+
+      // --- [핵심 추가 로직] 전역 실패 횟수 누적 ---
+      // 1. localStorage에서 현재까지 틀린 횟수를 가져옵니다. 없으면 0으로 시작.
+      let wrongCount = parseInt(localStorage.getItem('wrongAnswerCount') || '0');
+      
+      // 2. 틀린 횟수를 1 증가시키고 다시 저장합니다.
+      wrongCount++;
+      localStorage.setItem('wrongAnswerCount', wrongCount);
+
+      // 3. 만약 누적 3번 이상 틀렸다면, 강제로 스테이지를 클리어시킵니다.
+      if (wrongCount >= 3) {
+        alert("[Err0r] pr0cess gl!tch → 다른 問제로 이동");
+        // clearStage2 함수가 카운터 초기화까지 담당합니다.
+        clearStage2();
+      } else {
+        // 아직 3번 미만으로 틀렸다면, 현재 문제를 다시 로드합니다.
+        loadProblem(currentProblemIndex);
+      }
+      // --- [여기까지 핵심 추가 로직] ---
+    }
+  });
+  function clearStage2() {
+    imageCaptchaContainer.style.display = 'none';
+    alert('St@g3 2 has been cl3ar3d... someh0w.');
+    localStorage.setItem('clearedStage', '2');
+
+    // --- [추가된 부분] ---
+    // 스테이지를 클리어했으므로, 누적된 실패 횟수를 초기화합니다.
+    localStorage.removeItem('wrongAnswerCount');
+    // --- [여기까지 추가된 부분] ---
+
+    window.location.href = 'map.html';
+  }
+
+      dialogueContainer.addEventListener('click', () => {
+      // [핵심 로지] 만약 텍스트가 타이핑 중이라면,
+      if (isTyping) {
+        // 1. 진행 중인 타이핑 애니메이션을 중단합니다.
+        clearInterval(typingInterval);
+        // 2. 현재 대화의 전체 텍스트를 즉시 표시합니다.
+        dialogueTextElement.innerHTML = dialogues[currentDialogueIndex];
+        // 3. 타이핑이 끝났다고 상태를 변경합니다.
+        isTyping = false;
+        // 4. 다음으로 넘어갈 수 있다는 화살표를 표시합니다.
+        nextArrow.style.display = 'block';
+      } else {
+        // 타이핑 중이 아니라면, 기존처럼 다음 대화로 넘어갑니다.
+        currentDialogueIndex++;
+        if (currentDialogueIndex < dialogues.length) {
+          typeWriter(dialogues[currentDialogueIndex]);
+        } else {
+          // 마지막 대화가 끝나면 실행될 동작 (예: 캡차 시작)
+          startCaptchaChallenge(); 
+        }
+      }
+    });
+      function typeWriter(text) {
+      let i = 0;
+      dialogueTextElement.innerHTML = "";
+      isTyping = true;
+      nextArrow.style.display = 'none';
+    
+      // [수정] 'const'를 제거하여 전역 변수 typingInterval에 할당합니다.
+      // 이렇게 해야 click 이벤트에서 이 interval을 중단시킬 수 있습니다.
+      typingInterval = setInterval(() => {
+        if (i < text.length) {
+          dialogueTextElement.innerHTML += text.charAt(i);
+          i++;
+        } else {
+          clearInterval(typingInterval);
+          isTyping = false;
+          nextArrow.style.display = 'block';
+        }
+      }, 50);
+    }
+  
+  typeWriter(dialogues[currentDialogueIndex]);
+
+  // --- BGM 제어 스크립트 ---
+const bgm = document.getElementById("bgm");
+const bgmBtn = document.getElementById("bgm-btn");
+
+let isPlaying = false; 
+
+bgmBtn.style.backgroundImage = "url('map/b3.png')";
+
+
+// BGM 버튼 클릭 이벤트
+bgmBtn.addEventListener("click", (event) => {
+  event.stopPropagation();
+  if (isPlaying) {
+    bgm.pause();
+    isPlaying = false;
+    bgmBtn.style.backgroundImage = "url('map/b3.png')"; 
+  } else {
+    // bgm.play()가 실패할 경우를 대비 (사용자 상호작용 없이 자동재생 시)
+    const playPromise = bgm.play();
+    if (playPromise !== undefined) {
+      playPromise.then(_ => {
+        isPlaying = true;
+        bgmBtn.style.backgroundImage = "url('map/b2.png')";
+      }).catch(error => {
+        console.log("BGM 자동재생이 차단되었습니다. 사용자의 클릭이 필요합니다.");
+        // isPlaying은 여전히 false 상태
+      });
+    }
+  }
+});
+
+// BGM 버튼 호버 효과
+bgmBtn.addEventListener('mouseover', () => {
+    if (isPlaying) {
+        bgmBtn.style.backgroundImage = "url('map/-b2.png')";
+    } else {
+        bgmBtn.style.backgroundImage = "url('map/-b3.png')";
+    }
+    bgmBtn.style.transform = 'scale(1.1)';
+});
+
+bgmBtn.addEventListener('mouseout', () => {
+    if (isPlaying) {
+        bgmBtn.style.backgroundImage = "url('map/b2.png')";
+    } else {
+        bgmBtn.style.backgroundImage = "url('map/b3.png')";
+    }
+    bgmBtn.style.transform = 'scale(1)';
+});
+</script>
+</body>
+</html>
